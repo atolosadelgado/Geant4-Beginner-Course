@@ -167,8 +167,9 @@ latex_elements = {
        \vfill
        \vspace*{-50mm}
        \centering
-       \Large  {\textbf{Mih{\'a}ly Nov{\'a}k}\\ CERN EP-SFT\\}
-       \small  {version: 0.0.1 (\texttt{Geant4-11.00})\\}
+       \Large  {\textbf{Alvaro Tolosa-Delgado}\\}
+       \Large  {\textbf{based on Mih{\'a}ly Nov{\'a}k course}\\ CERN EP-SFT\\}
+       \small  {version: 0.0.2 (\texttt{Geant4-11.4})\\}
        \vspace*{35mm}
        \small \textbf{\today}
     \end{titlepage}
