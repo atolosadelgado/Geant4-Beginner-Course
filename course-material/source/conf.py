@@ -129,52 +129,48 @@ html_theme_options = {
 # -- Options for LaTeX output ---------------------------------------------#
 
 latex_elements = {
- # 'papersize': 'a4paper',
-# 'releasename':"version: 0.0.1 (\texttt{Geant4-11.00})",
-#
-# remove white pages
-# 'extraclassoptions': 'openany,oneside',
- #
-  "preamble": r"""
-    \usepackage{amsmath}
-    \usepackage{amsfonts}
-    \usepackage{amssymb}
-    \usepackage{bm}
-    \usepackage{bbm}
-    \usepackage{booktabs}
-%    \usepackage[table,xcdraw]{xcolor}
-    \usepackage{rotating,tabularx}
-    \usepackage{multirow}
-  """,
- 'preamble': '\\addto\\captionsenglish{\\renewcommand{\\contentsname}{Table of contents}}',
-#  'fncychap': '\\usepackage[Conny]{fncychap}',
-#    \usepackage{mathtools}
-  'maketitle': r'''
-     \pagenumbering{Roman} %%% to avoid page 1 conflict with actual page 1
-     \begin{titlepage}
-       %% * give space from top
-       \vspace*{30mm}
-       \textbf{\Huge {\texttt{Geant4} Beginner Course Material}}
-       \rule{1.0\linewidth}{2.4pt}\\[-3.7ex] \rule{1.0\linewidth}{0.6pt}
-       %% add logo
-          \vspace*{20mm}
-          \begin{figure}[!h]
-             \centering
-             \includegraphics[scale=1.1]{g4logo-web.png}
-          \end{figure}
-       %% add some space
-       %% add space till the bottom
-       \vfill
-       \vspace*{-50mm}
-       \centering
-       \Large  {\textbf{Alvaro Tolosa-Delgado}\\}
-       \Large  {\textbf{based on Mih{\'a}ly Nov{\'a}k course}\\ CERN EP-SFT\\}
-       \small  {version: 0.0.2 (\texttt{Geant4-11.4})\\}
-       \vspace*{35mm}
-       \small \textbf{\today}
-    \end{titlepage}
-    \pagenumbering{arabic}
-''',
+    "preamble": r"""
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{booktabs}
+\usepackage{rotating,tabularx}
+\usepackage{multirow}
+
+% Change name of index
+\addto\captionsenglish{\renewcommand{\contentsname}{Table of contents}}
+
+% Make codeblocks smaller
+\usepackage{etoolbox}
+\AtBeginEnvironment{sphinxVerbatim}{\footnotesize}
+""",
+
+    'maketitle': r'''
+\pagenumbering{Roman}
+\begin{titlepage}
+\vspace*{30mm}
+\textbf{\Huge {\texttt{Geant4} Beginner Course Material}}
+\rule{1.0\linewidth}{2.4pt}\\[-3.7ex] \rule{1.0\linewidth}{0.6pt}
+
+\vspace*{20mm}
+\begin{figure}[!h]
+\centering
+\includegraphics[scale=1.1]{g4logo-web.png}
+\end{figure}
+
+\vfill
+\vspace*{-50mm}
+\centering
+\Large  {\textbf{Alvaro Tolosa-Delgado}\\}
+\Large  {\textbf{based on Mih{\'a}ly Nov{\'a}k course}\\ CERN EP-SFT\\}
+\small  {version: 0.0.2 (\texttt{Geant4-11.4})\\}
+\vspace*{35mm}
+\small \textbf{\today}
+\end{titlepage}
+\pagenumbering{arabic}
+'''
 }
 
 latex_logo = "g4logo-web.png"
@@ -185,3 +181,5 @@ latex_documents = [
     (master_doc, 'geant4beginnercourse.tex', u'G4 doc',
      u'Mihaly Novak', 'howto'),
 ]
+
+bibtex_bibfiles = ['references.bib']
