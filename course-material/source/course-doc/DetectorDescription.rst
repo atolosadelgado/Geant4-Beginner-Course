@@ -2,12 +2,12 @@
 .. _ref-DetectorDescription:
 
 Detector Description
---------------
+--------------------
 
 In Geant4, We call "detector description" to the description of the materials and geometry of our case of study. The geometry can be instrumented to include fields (e.g., EM) or other features that will be mentioned in the dedicated section.
 
 Unit system
-..........
+...........
 
 CLHEP, centralized system of units. do not match ROOT units. use "using CLHEP::GeV" with care, avoid loading full namespace
 
@@ -111,9 +111,9 @@ Inspect header file G4Element.hh and learn what are the arguments for the constr
 
 And if we execute the code, we will see::
 
-Element: Carbon (C)   Z =  6.0   N =    12   A = 12.010 g/mole
-         --->  Isotope:   C12   Z =  6   N =  12   A =  12.00 g/mole   abundance: 98.930 %
-         --->  Isotope:   C13   Z =  6   N =  13   A =  13.00 g/mole   abundance:  1.070 %
+    Element: Carbon (C)   Z =  6.0   N =    12   A = 12.010 g/mole
+            --->  Isotope:   C12   Z =  6   N =  12   A =  12.00 g/mole   abundance: 98.930 %
+            --->  Isotope:   C13   Z =  6   N =  13   A =  13.00 g/mole   abundance:  1.070 %
 
 TODO: why if Z is Zeff, it throws warning and round z to integer?
 
@@ -153,9 +153,9 @@ Alternatively, we can build the element from our custom set of isotopes::
 
 And if we run it again, we will see this::
 
-Element: PrehistoricCarbon (C)   Z =  6.0   N =    12   A = 12.050 g/mole
-         --->  Isotope:   C12   Z =  6   N =  12   A =  12.00 g/mole   abundance: 95.000 %
-         --->  Isotope:   C13   Z =  6   N =  13   A =  13.00 g/mole   abundance:  5.000 %
+    Element: PrehistoricCarbon (C)   Z =  6.0   N =    12   A = 12.050 g/mole
+            --->  Isotope:   C12   Z =  6   N =  12   A =  12.00 g/mole   abundance: 95.000 %
+            --->  Isotope:   C13   Z =  6   N =  13   A =  13.00 g/mole   abundance:  5.000 %
 
 
 Materials
@@ -278,7 +278,7 @@ And the corresponding output will be::
 NIST material database
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Geant4 has a set of predefined elements materials whose properties come from NIST database (density, mean ionization energy, etc). We can retrieve elements by symbol or atomic number, and materials by name (starting by "G4_"). List of NIST elements and materials is found in the documentation: https://geant4-userdoc.web.cern.ch/UsersGuides/ForApplicationDeveloper/html/Appendix/materialNames.html or the code https://github.com/Geant4/geant4/blob/41f2dd79968018de4efb966f2546970b30c4af78/source/materials/src/G4NistMaterialBuilder.cc#L708
+Geant4 has a set of predefined elements materials whose properties come from NIST database (density, mean ionization energy, etc). We can retrieve elements by symbol or atomic number, and materials by name (starting by `G4_`). List of NIST elements and materials is found in the documentation: https://geant4-userdoc.web.cern.ch/UsersGuides/ForApplicationDeveloper/html/Appendix/materialNames.html or the code https://github.com/Geant4/geant4/blob/41f2dd79968018de4efb966f2546970b30c4af78/source/materials/src/G4NistMaterialBuilder.cc#L708
 
 The following main program show some functionality of the Geant4 NIST material manager::
 
@@ -451,7 +451,7 @@ Geometries can be as close to reality as needed. However, we will focus only in 
 The geometry and materials can be changed only when the Geant4 simulation is at idle state (i.e., no events being simulated). If geometry or material change, we have to pass that information to re-optimize the geometry (if change of geometry) or re-build physics tables (if change of materials). We will see more later.
 
 Geant4 solids: G4VSolid
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
 Geometrical shapes derive from G4VSolid base class. This class provides interface to a number of methods:
 - check if a point is inside or not
 - compute distance between shape and a given point
@@ -494,7 +494,7 @@ A Physical volume encapsulates the information of a logical volume and its place
 The same Logical Volume can be placed many times (so there will be a G4VPhysicalVolume for each one). It is mandatory to provide a mother volume in which we are placing a new logical volume. There are two rules for placements:
 -The placed volume (daughter volume) must not protrude the mother volume
 -The placed volume must not overlap with other placed placed volumes within the same mother volume
--One single physical volume can have no-mother: the toppest placed volume, typically known as "world". The entire simulation will happen inside this volume.
+-One single physical volume can have no-mother: the toppest placed volume, typically known as "world". The simulation will happen inside this volume.
 
 Geant4 provides tools to run an overlap check at runtime, or we can construct the placed volumes to check for overlaps before the simulation starts. Checking for overlaps may take some time (depending on the complexity), and therefore the former method is usually preferred.
 
@@ -506,4 +506,4 @@ Geant4 provides tools to run an overlap check at runtime, or we can construct th
 YourDetectorConstruction
 ........................
 
-We have reviewed in this section how to build materials and the three layers of the geometry model, so we are ready to start building our own application.
+We have reviewed in this section how to build materials and the three layers of the geometry model, so we are ready to start building our own application. Implementation details are given in a later section :ref:`YourDetectorConstruction-class`.
