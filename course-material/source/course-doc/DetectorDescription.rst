@@ -494,6 +494,7 @@ A Physical volume encapsulates the information of a logical volume and its place
 The same Logical Volume can be placed many times (so there will be a G4VPhysicalVolume for each one). It is mandatory to provide a mother volume in which we are placing a new logical volume. There are two rules for placements:
 -The placed volume (daughter volume) must not protrude the mother volume
 -The placed volume must not overlap with other placed placed volumes within the same mother volume
+-One single physical volume can have no-mother: the toppest placed volume, typically known as "world". The entire simulation will happen inside this volume.
 
 Geant4 provides tools to run an overlap check at runtime, or we can construct the placed volumes to check for overlaps before the simulation starts. Checking for overlaps may take some time (depending on the complexity), and therefore the former method is usually preferred.
 
@@ -502,3 +503,7 @@ Geant4 provides tools to run an overlap check at runtime, or we can construct th
 
    A physical volume corresponds to the placement of a logical volume. One logical volume can be placed more than once. The placement can be unique (G4PVPlacement) or multiple  ( G4PVReplica, G4PVParameterised, G4PVDivision, G4ReplicatedSlice). Please ensure that there are no overlaps in the resulting geometry.
 
+YourDetectorConstruction
+........................
+
+We have reviewed in this section how to build materials and the three layers of the geometry model, so we are ready to start building our own application.
