@@ -39,21 +39,23 @@ The course is expected to be of interest to novices and those with basic or part
 
 
 
-.. .. raw:: latex
-..
-..    \newpage
-..    \part{Application Documentation}
-..    \vspace*{-0.8cm}
-..    \par\noindent\rule{\textwidth}{1.0pt}\\
-..    \vspace*{-1.0cm}
-..    \par\noindent\rule{\textwidth}{1.0pt}
-..    \vspace*{2.0cm}
-..
-..
-.. .. toctree::
-..    :maxdepth: 2
-..    :caption: Application Documentation
-..    :hidden:
+.. raw:: latex
+
+   \newpage
+   \part{Intermediate Application Documentation}
+   \vspace*{-0.8cm}
+   \par\noindent\rule{\textwidth}{1.0pt}\\
+   \vspace*{-1.0cm}
+   \par\noindent\rule{\textwidth}{1.0pt}
+   \vspace*{2.0cm}
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Intermediate Application Documentation
+   :hidden:
+
+   course-doc/IntermediateApplication
 ..
 ..    applications-doc/preliminaries/cpp-interface
 ..
