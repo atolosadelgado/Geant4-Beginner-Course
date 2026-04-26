@@ -34,6 +34,7 @@ The course is expected to be of interest to novices and those with basic or part
    course-doc/Introduction
    course-doc/Preliminaries
    course-doc/DetectorDescription
+   course-doc/PhysicsLists
 
 
 

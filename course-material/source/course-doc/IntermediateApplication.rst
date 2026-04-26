@@ -62,6 +62,11 @@ Now we are ready to start populating the project with source code of the 4 manda
 YourDetectorConstruction class
 ------------------------------
 
+
+.. tip::
+
+    Before coding the detector description, it is usually a good practice to draw a sketch first
+
 We will start by creating the file `YourDetectorConstruction.hh` in the directory include. Inside this header file we are going to declare our class `YourDetectorConstruction`. Every header should include a *guard define* by creating a preprocessor macro like this::
 
     // File: YourDetectorConstruction.hh
@@ -183,8 +188,7 @@ Once we check that it compiles and run without errors, we can start implementing
         {
             fTargetMaterial = mat;
 
-            if(G4RunManager::GetRunManager()){
-                G4RunManager::GetRunManager()->PhysicsHasBeenModified();
+            G4RunManager::GetRunManager()->PhysicsHasBeenModified();
             }
 
         }
@@ -193,8 +197,7 @@ Once we check that it compiles and run without errors, we can start implementing
 
     void YourDetectorConstruction::SetTargetThickness(G4double thickness){
         fTargetThickness = thickness;
-        if(G4RunManager::GetRunManager()){
-            G4RunManager::GetRunManager()->ReinitializeGeometry();
+        G4RunManager::GetRunManager()->ReinitializeGeometry();
         }
     }
 
@@ -254,4 +257,578 @@ Once we check that it compiles and run without errors, we can start implementing
         return nullptr;
     }
 
+
+This code will compile, but it will give a segmentation fault, because nobody created a RunManager, and therefore the instance is null but we are using that pointer (without checking). We will have to create a run manager in the next section.
+
+As an improvement, we can move the calculation of the world and target sizes to dedicated methods, so the hardcoded scaling factors are in a more apropiate place. In addition, we will add a function to calculate the gun position along the X axis. The header file would look like this now::
+
+    // File: YourDetectorConstruction.hh
+
+    #ifndef YourDetectorConstruction_hh
+    #define YourDetectorConstruction_hh
+
+    #include "G4VUserDetectorConstruction.hh"
+
+    class G4Material;
+
+    class YourDetectorConstruction : public G4VUserDetectorConstruction {
+    public:
+        YourDetectorConstruction();
+        ~YourDetectorConstruction() override;
+
+        // method to build the geometry description, called by G4RunManager
+        // returns pointer to the most top physical volume (the world)
+        G4VPhysicalVolume * Construct() override;
+
+        // setters and getters for target material and thickness
+        // getters should return copy or const reference/ptr
+        const G4Material* GetTargetMaterial(){return fTargetMaterial;}
+        G4double          GetTargetThickness(){return fTargetThickness;}
+        void SetTargetMaterial(const G4String& matName);
+        void SetTargetThickness(G4double thickness);
+
+        // fTargetPhysicalVolume is set during the construction, default nullptr
+        // the returned value is constant because nobody should change it outside the class
+        const G4VPhysicalVolume* GetTargetPhysicalVolume(){return fTargetPhysicalVolume;}
+
+        // encapsulate scale factors in this functions
+        G4double GetTargetSizeX() {return      fTargetThickness; }
+        G4double GetTargetSizeYZ(){return  1.2*fTargetThickness; }
+        G4double GetWorldSizeX()  {return  1.1*GetTargetSizeX(); }
+        G4double GetWorldSizeYZ() {return  1.1*GetTargetSizeYZ();}
+
+        // Calculate Gun position from World and Target Size-X
+        G4double GetGunPositionX(){return -0.25*( GetWorldSizeX() + GetTargetSizeX() );}
+
+    private:
+        G4Material* fTargetMaterial{nullptr};
+        G4double    fTargetThickness{0.0};
+        G4VPhysicalVolume* fTargetPhysicalVolume{nullptr};
+    };
+
+    #endif // YourDetectorConstruction_hh
+
+And the implementation would change a bit too; in addition, we have added a printout to know when the `Construct` Method is being called::
+
+    #include "YourDetectorConstruction.hh"
+
+    #include "globals.hh" // G4cout, G4endl
+    #include "G4PhysicalConstants.hh"
+
+    // for geometry definitions
+    #include "G4Box.hh"
+    #include "G4LogicalVolume.hh"
+    #include "G4PVPlacement.hh"
+
+    // for material definitions
+    #include "G4Material.hh"
+    #include "G4NistManager.hh"
+
+    #include "G4RunManager.hh"
+
+    YourDetectorConstruction::YourDetectorConstruction() : G4VUserDetectorConstruction() {
+        SetTargetMaterial("G4_Si");
+        SetTargetThickness(1.0*CLHEP::cm);
+    }
+
+    YourDetectorConstruction::~YourDetectorConstruction() {}
+
+    void YourDetectorConstruction::SetTargetMaterial(const G4String& matName){
+        G4Material* mat = G4NistManager::Instance()->FindOrBuildMaterial(matName);
+        if(nullptr == mat){
+            G4cerr << "Error in YourDetectorConstruction::SetTargetMaterial. Material "
+                   << matName << " not included in G4NistManager" << G4endl;
+            exit(-1);
+        }
+        if(fTargetMaterial != mat)
+        {
+            fTargetMaterial = mat;
+
+        if(G4RunManager::GetRunManager()) G4RunManager::GetRunManager()->PhysicsHasBeenModified();
+
+        }
+        return;
+    }
+
+    void YourDetectorConstruction::SetTargetThickness(G4double thickness){
+        fTargetThickness = thickness;
+
+        if(G4RunManager::GetRunManager()) G4RunManager::GetRunManager()->ReinitializeGeometry();
+    }
+
+
+    G4VPhysicalVolume* YourDetectorConstruction::Construct(){
+
+        G4cout << "Starting YourDetectorConstruction::Construct()" << G4endl;
+
+        // I. CREATE/SET MATERIALS:
+
+        // 1. Material for the world: G4_Galactic (low density hydrogen)
+        G4String materialNameWorld = "G4_Galactic";
+        G4Material* materialWorld  = G4NistManager::Instance()->FindOrBuildMaterial(materialNameWorld);
+
+        // 2. Material for the target: material pointer stored in fTargetMaterial
+        G4Material* targetMaterial = fTargetMaterial;
+
+        // II. CREATE GEOMETRY:
+
+        // Create the world and the target (both will be box):
+
+        // a. world
+        G4Box*              worldSolid   = new G4Box("solid-World",  // name
+                                                0.5*GetWorldSizeX(),   // half x-size
+                                                0.5*GetWorldSizeYZ(),  // half y-size
+                                                0.5*GetWorldSizeYZ()); // half z-size
+        G4LogicalVolume*    worldLogical = new G4LogicalVolume(worldSolid,     // solid
+                                                            materialWorld,  // material
+                                                            "logic-World"); // name
+        G4VPhysicalVolume*  worldPhyscal = new G4PVPlacement(nullptr,                 // (no) rotation
+                                                            G4ThreeVector(0.,0.,0.), // translation
+                                                            worldLogical,            // its logical volume
+                                                            "World",                 // its name
+                                                            nullptr,                 // its mother volume
+                                                            false,                   // not used
+                                                            0);                      // cpy number
+        // b. target
+        G4Box*              targetSolid   = new G4Box("solid-Target",    // name
+                                                    0.5*GetTargetSizeX(),   // half x-size
+                                                    0.5*GetTargetSizeYZ(),  // half y-size
+                                                    0.5*GetTargetSizeYZ()); // half z-size
+        G4LogicalVolume*    targetLogical = new G4LogicalVolume(targetSolid,    // solid
+                                                            targetMaterial,  // material
+                                                            "logic-Target"); // name
+        G4VPhysicalVolume*  targetPhyscal = new G4PVPlacement(nullptr,                 // (no) rotation
+                                                            G4ThreeVector(0.,0.,0.), // translation
+                                                            targetLogical,           // its logical volume
+                                                            "Target",                // its name
+                                                            worldLogical,            // its mother volume
+                                                            false,                   // not used
+                                                            0);                      // cpy number
+
+        fTargetPhysicalVolume = targetPhyscal;
+
+        // III. RETURN WITH THE World PHYSICAL-VOLUME POINTER:
+        return worldPhyscal;
+
+    }
+
+
+
+.. _how-to-reference-physics-list:
+
+Retrieving a reference physics list
+-----------------------------------
+
+To retrieve a reference physics list, we will use of a so-called factory. Then we can ask the factory to retrieve the corresponding physics list by name. In our case, we will take the hadronic option `FTFP_BERT`, and the default EM option, `EM0` (which can be omited). There is another option `EMZ` that is the most accurate EM physics implemented in Geant4. The meaning of each acronym is outside the scope of this course, and more information can be found in the manual and the upcoming course. In the main function, we can add these lines. Remember to add the Geant4 haeader files for the new classes used in these lines!
+
+.. code-block:: cpp
+
+    const G4String plName = "FTFP_BERT_EMZ";
+    G4PhysListFactory plFactory;
+    G4VModularPhysicsList *pl = plFactory.GetReferencePhysList( plName );
+
+Creating a Geant4 Run Manager
+-----------------------------
+
+There are seveal Run Managers in Geant4, so we will use a helper class called factory to build our manager. The file `yourMainApplication.cc` will look like this::
+
+    #include "G4RunManagerFactory.hh"
+
+    #include "YourDetectorConstruction.hh"
+
+    #include "G4PhysListFactory.hh"
+
+    int main(){
+
+        auto * runManager = G4RunManagerFactory::CreateRunManager();
+
+        YourDetectorConstruction* detector = new YourDetectorConstruction();
+        runManager->SetUserInitialization(detector);
+
+        const G4String plName = "FTFP_BERT";
+        G4PhysListFactory plFactory;
+        G4VModularPhysicsList *pl = plFactory.GetReferencePhysList( plName );
+        runManager->SetUserInitialization(pl);
+
+        return 0;
+    }
+
+We can compile and run, we will see few printout messages::
+
+    **************************************************************
+    Geant4 version Name: geant4-11-04-ref-00    (5-December-2025)
+                        Copyright : Geant4 Collaboration
+                        References : NIM A 506 (2003), 250-303
+                                    : IEEE-TNS 53 (2006), 270-278
+                                    : NIM A 835 (2016), 186-225
+                                WWW : http://geant4.org/
+    **************************************************************
+
+    G4PhysListFactory::GetReferencePhysList <FTFP_BERT>
+    <<< Geant4 Physics List simulation engine: FTFP_BERT
+
+To be able to initialize the run manager and run a simulation, we are still missing the primary generator, the last mandatory component. We will see how to implement it in the next section.
+
+Primary generator
+-----------------
+
+We will implement a pencil beam of monoenergetic electrons. We will need 2 new classes for this:
+
+- G4VUserPrimaryGenerationAction, it is the Geant4 interface for our own primary generator. The method `Generate primaries` is invoked at the begining of each event to create some primary particles, and this is the method we have to override from the base class
+- G4UserActionInitialization, it is the Geant4 interface to declare the user actions, a collection of interfaces that serve as contact point between the user and the simulation. At its minimum, we have to derive our own from the interface and override the `Build()` method to register our own primary generator.
+
+YourPrimaryGenerator
+^^^^^^^^^^^^^^^^^^^^
+
+The position of the gun has to be retrieved from the detector constructor. So we will psas the pointer to the detector constructor object to the constructor and we are going to store it as a member of the primary generator class. We need also to override the method `GeneratePrimaries`. Geant4 provides different generators of primaries, we will use the simplest is called `G4ParticleGun`, so we will have to create a field to store it in the object. To configure the gun, we will add two helper methods `SetDefault` and `UpdatePosition`.
+
+The file `./include/YourPrimaryGeneratorAction.hh` will look like this::
+
+    #ifndef YourPrimaryGeneratorAction_hh
+    #define YourPrimaryGeneratorAction_hh
+
+    #include "G4VUserPrimaryGeneratorAction.hh"
+
+    class YourDetectorConstruction;
+    class G4ParticleGun;
+    class G4Event;
+
+    class YourPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
+    {
+        public:
+            YourPrimaryGeneratorAction(YourDetectorConstruction * det);
+            virtual ~YourPrimaryGeneratorAction() override;
+
+            virtual void GeneratePrimaries(G4Event *) override;
+
+            void SetDefault();
+
+            void UpdatePosition();
+        private:
+            YourDetectorConstruction * fDetector;
+            G4ParticleGun *            fGun;
+
+    };
+    #endif // YourPrimaryGeneratorAction_hh
+
+And its implementation in `./src/YourPrimaryGeneratorAction.cc` will look like this::
+
+    #include "YourPrimaryGeneratorAction.hh"
+
+    #include "YourDetectorConstruction.hh"
+
+    #include "G4ParticleGun.hh"
+    #include "G4ParticleTable.hh"
+    #include "G4Event.hh"
+
+    YourPrimaryGeneratorAction::YourPrimaryGeneratorAction(YourDetectorConstruction* det):G4VUserPrimaryGeneratorAction(),fDetector(det){
+        G4int nPrimaryParticles = 1;
+        fGun = new G4ParticleGun(nPrimaryParticles);
+
+        SetDefault();
+    }
+
+    YourPrimaryGeneratorAction::~YourPrimaryGeneratorAction(){
+        delete fGun;
+    }
+
+    void YourPrimaryGeneratorAction::SetDefault(){
+        G4ParticleDefinition * part = G4ParticleTable::GetParticleTable()->FindParticle("e-");
+        //G4ParticleDefinition * part = G4Electron::Definition();
+        fGun->SetParticleDefinition(part);
+
+        G4ThreeVector xAxisDirection(1.,0.,0.);
+        fGun->SetParticleMomentumDirection(xAxisDirection);
+
+        G4double pEnergy = 30*CLHEP::MeV;
+        fGun->SetParticleEnergy(pEnergy);
+
+        UpdatePosition();
+    }
+
+    void YourPrimaryGeneratorAction::UpdatePosition(){
+        G4ThreeVector gunPosition(fDetector->GetGunPositionX(),0.,0.);
+        fGun->SetParticlePosition(gunPosition);
+
+    }
+
+    void YourPrimaryGeneratorAction::GeneratePrimaries(G4Event *evt) {
+        fGun->GeneratePrimaryVertex(evt);
+    }
+
+Notice that we have to allocate and de-allocate memory for the particle gun (with new/delete in the constructor/destructor). Check the header of `G4ParticleGun` for the list of methods. If we try to compile, we will have an error message like `error: class YourDetectorConstruction has no member named GetGunPositionX`. So we have to go back to the `YourDetectorConstruction.hh`, add a private member called `G4double fGunPositionX{0.0};`, and a getter like, `G4double GetGunPositionX(){return fGunPositionX;}`; and in ``YourDetectorConstruction.cc` contructor method, we have to calculate its value as `fGunPositionX = -0.25*( worldXSize + targetXSize );`. After these 3 additions, the code should compile successfully.
+
+YourActionInitialization
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Now we have to register the primary generator as user action in a derived class from the Geant4 interface dedicated to collect all the user actions, and then we have to create an instance of this class in the main and register the main user action initalization class into the run manager.
+
+The header file `include/YourActionInitialization.hh` will look like this::
+
+    #ifndef YourActionInitialization_hh
+    #define YourActionInitialization_hh
+
+    #include "G4VUserActionInitialization.hh"
+    class YourDetectorConstruction;
+    class YourActionInitialization : public G4VUserActionInitialization
+    {
+        public:
+            YourActionInitialization(YourDetectorConstruction * det);
+            virtual ~YourActionInitialization() override;
+
+            virtual void Build() const override;
+
+        private:
+            YourDetectorConstruction * fDetector;
+    };
+    #endif // YourActionInitialization_hh
+
+
+And the implementation in the file `src/YourActionInitialization.cc` looks like this::
+
+    #include "YourActionInitialization.hh"
+    #include "YourPrimaryGeneratorAction.hh"
+
+    YourActionInitialization::YourActionInitialization(YourDetectorConstruction * det):G4VUserActionInitialization(),fDetector(det){}
+
+    YourActionInitialization::~YourActionInitialization(){}
+
+    void YourActionInitialization::Build() const {
+    YourPrimaryGeneratorAction* primaryAction = new YourPrimaryGeneratorAction(fDetector);
+    SetUserAction(primaryAction);
+    }
+
+The final step is to register an instance of `YourActionInitialization` into the run manager. To do so, in the main file `yourMainApplication.cc` we have to add few lines, and the file will look as below::
+
+    #include "YourDetectorConstruction.hh"
+    #include "YourActionInitialization.hh"
+
+    #include "G4PhysListFactory.hh"
+    #include "G4RunManagerFactory.hh"
+
+    int main(){
+
+        auto * runManager = G4RunManagerFactory::CreateRunManager();
+
+        YourDetectorConstruction* detector = new YourDetectorConstruction();
+        runManager->SetUserInitialization(detector);
+
+        const G4String plName = "FTFP_BERT";
+        G4PhysListFactory plFactory;
+        G4VModularPhysicsList *pl = plFactory.GetReferencePhysList( plName );
+        runManager->SetUserInitialization(pl);
+
+        YourActionInitialization * actionInitialization = new YourActionInitialization(detector);
+        runManager->SetUserInitialization( actionInitialization );
+
+        return 0;
+    }
+
+If we compile and run, we should see the same output as before. The next section explains how to run a simulation by simply adding another 2 lines in the main function.
+
+Run manager initialize and BeamOn methods
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+After registering the geometry, the physics and the actions into the run manager, We can call its `Initialize` and `BeamOn` methods, so the main file will look like this::
+
+    #include "YourDetectorConstruction.hh"
+    #include "YourActionInitialization.hh"
+
+    #include "G4PhysListFactory.hh"
+    #include "G4RunManagerFactory.hh"
+
+    int main(){
+
+        auto * runManager = G4RunManagerFactory::CreateRunManager();
+
+        YourDetectorConstruction* detector = new YourDetectorConstruction();
+        runManager->SetUserInitialization(detector);
+
+        const G4String plName = "FTFP_BERT";
+        G4PhysListFactory plFactory;
+        G4VModularPhysicsList *pl = plFactory.GetReferencePhysList( plName );
+        runManager->SetUserInitialization(pl);
+
+        YourActionInitialization * actionInitialization = new YourActionInitialization(detector);
+        runManager->SetUserInitialization( actionInitialization );
+
+        runManager->Initialize();
+        runManager->BeamOn(2);
+
+        return 0;
+    }
+
+Now a long printout appears. The `Initialize` method calls the `YourDetectorConstruction::Construct` and the physics contructors for particles and processes. The printout is coming from the physics modules, in particular about their default parameter configuration. The `BeamOn(2)` method will run a simulation with 2 events, but nothing is being printed about it. We will activate some verbosity to printout the steps of the particules during the simulation. To do so, we will first enable 1 single thread, so the printout is linear. The main function should look like this::
+
+        #include "YourDetectorConstruction.hh"
+        #include "YourActionInitialization.hh"
+
+        #include "G4PhysListFactory.hh" // to retrieve reference physics list
+        #include "G4RunManagerFactory.hh" // to produce default G4RunManager
+        #include "G4UImanager.hh" // to pass some built-in UI commands
+
+        int main(){
+
+            auto * runManager = G4RunManagerFactory::CreateRunManager();
+            runManager->SetNumberOfThreads(1);
+
+            YourDetectorConstruction* detector = new YourDetectorConstruction();
+            runManager->SetUserInitialization(detector);
+
+            const G4String plName = "FTFP_BERT";
+            G4PhysListFactory plFactory;
+            plFactory.SetVerbose(0);
+            G4VModularPhysicsList *pl = plFactory.GetReferencePhysList( plName );
+            runManager->SetUserInitialization(pl);
+
+            YourActionInitialization * actionInitialization = new YourActionInitialization(detector);
+            runManager->SetUserInitialization( actionInitialization );
+
+            runManager->Initialize();
+
+            G4UImanager * UImanager = G4UImanager::GetUIpointer();
+            UImanager->ApplyCommand("/tracking/verbose 1");
+            UImanager->ApplyCommand("/event/verbose 1");
+
+            runManager->BeamOn(1);
+
+            return 0;
+        }
+
+After that we should see something like this::
+
+    *********************************************************************************************************
+    * G4Track Information:   Particle = e-,   Track ID = 1,   Parent ID = 0
+    *********************************************************************************************************
+
+    Step#    X(mm)    Y(mm)    Z(mm) KinE(MeV)  dE(MeV) StepLeng TrackLeng  NextVolume ProcName
+        0    -5.25        0        0        30        0        0         0       World initStep
+        1       -5        0        0        30 8.29e-27     0.25      0.25      Target Transportation
+        2     2.06    0.191   -0.638      22.3     2.65     7.12      7.37      Target eBrem
+        3        5     0.53   -0.824      21.3     1.03     2.99      10.4       World Transportation
+        4      5.5    0.651   -0.823      21.3 1.65e-26    0.515      10.9  OutOfWorld Transportation
+
+    *********************************************************************************************************
+    * G4Track Information:   Particle = gamma,   Track ID = 2,   Parent ID = 1
+    *********************************************************************************************************
+
+    Step#    X(mm)    Y(mm)    Z(mm) KinE(MeV)  dE(MeV) StepLeng TrackLeng  NextVolume ProcName
+        0     2.06    0.191   -0.638      5.04        0        0         0      Target initStep
+        1        5    0.534   -0.517      5.04        0     2.97      2.97       World Transportation
+        2      5.5    0.592   -0.497      5.04        0    0.504      3.47  OutOfWorld Transportation
+
+A primary electron crosses the world, the target, and before exiting it produces a gamma ray by Bremsstrahlung, and then it reaches the end of the world indicated as `OutOfWorld`. The tracking of the secondary gamma ray starts once the primary particle has been fully tracked. The gamma ray does not interact with anything and it is only transported until the end of the world. We do not know exactly what happened between the steps (continuous energy loss and MSC in a condensed history approach: many interactions are captured by a single step). Notice that the track ID is a counter that is increased for each particle being simulated. The parent ID corresponds to the track ID of the mother particle.
+
+If we take a look to another event::
+
+    *********************************************************************************************************
+    * G4Track Information:   Particle = e-,   Track ID = 1,   Parent ID = 0
+    *********************************************************************************************************
+
+    Step#    X(mm)    Y(mm)    Z(mm) KinE(MeV)  dE(MeV) StepLeng TrackLeng  NextVolume ProcName
+        0    -5.25        0        0        30        0        0         0       World initStep
+        1       -5        0        0        30 8.29e-27     0.25      0.25      Target Transportation
+        2    -4.71  0.00526 0.000107      29.5   0.0982    0.286     0.536      Target eIoni
+        3    -1.99 -0.00292  -0.0997        28    0.933     2.73      3.27      Target eIoni
+        4        5    0.183   -0.372      25.1     2.97     7.06      10.3       World Transportation
+        5      5.5     0.17   -0.314      25.1 1.64e-26    0.503      10.8  OutOfWorld Transportation
+    Track (trackID 1, parentID 0) is processed with stopping code 2
+
+    *********************************************************************************************************
+    * G4Track Information:   Particle = e-,   Track ID = 3,   Parent ID = 1
+    *********************************************************************************************************
+
+    Step#    X(mm)    Y(mm)    Z(mm) KinE(MeV)  dE(MeV) StepLeng TrackLeng  NextVolume ProcName
+        0    -1.99 -0.00292  -0.0997     0.519        0        0         0      Target initStep
+        1    -1.78   -0.266  0.00283         0    0.519    0.997     0.997      Target eIoni
+    Track (trackID 3, parentID 1) is processed with stopping code 2
+
+    *********************************************************************************************************
+    * G4Track Information:   Particle = e-,   Track ID = 2,   Parent ID = 1
+    *********************************************************************************************************
+
+    Step#    X(mm)    Y(mm)    Z(mm) KinE(MeV)  dE(MeV) StepLeng TrackLeng  NextVolume ProcName
+        0    -4.71  0.00526 0.000107     0.426        0        0         0      Target initStep
+        1    -4.59  -0.0526  -0.0516     0.377   0.0492    0.156     0.156      Target msc
+        2    -4.53  -0.0554    0.189     0.272    0.105    0.294      0.45      Target msc
+        3    -4.59   -0.116    0.293         0    0.272    0.392     0.842      Target eIoni
+
+Notice that Geant4 tracks first the last secondary because particles to be tracked are placed in stacks, and the first to be taken is the last placed in the stack.
+
+Notice also that if we run the same code in the same machine, we should get the same printout. This is because Geant4 uses pseudo-random numbers.
+
+The number of steps is not something we can decide, Geant4 uses Monte Carlo methods for tracking and interactions. To calculate if an interaction happens, the processes associated to the particle are invoked and asked to provide the mean interaction length (inversely proportional to the atomic cross section and material density), and interaction length is sampled from an exponential disitribution with that mean length, and the process with the shortest sampled interaction length wins and that is the process that happens. The interaction probability distribution is exponential because the probability is constant, and that happens if we assume constant material.
+
+In general, it is preferred to keep an event as simple as possible (1M events rather than 1 event with 1M of primaries).
+
+
+.. tip::
+
+    The uncertainty of a MC simulation has 2 components, as in a real experiment: the precision is given by the number of events, and an accuracy given by the (particles and) processes we choose for our simulation.
+
+Changing detector size between runs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We can change the thickness of the target and run a second run by adding two lines at the end of our main, so it would look like this::
+
+        #include "YourDetectorConstruction.hh"
+        #include "YourActionInitialization.hh"
+
+        #include "G4PhysListFactory.hh" // to retrieve reference physics list
+        #include "G4RunManagerFactory.hh" // to produce default G4RunManager
+        #include "G4UImanager.hh" // to pass some built-in UI commands
+
+        int main(){
+
+            auto * runManager = G4RunManagerFactory::CreateRunManager();
+            runManager->SetNumberOfThreads(1);
+
+            YourDetectorConstruction* detector = new YourDetectorConstruction();
+            runManager->SetUserInitialization(detector);
+
+            const G4String plName = "FTFP_BERT";
+            G4PhysListFactory plFactory;
+            plFactory.SetVerbose(0);
+            G4VModularPhysicsList *pl = plFactory.GetReferencePhysList( plName );
+            runManager->SetUserInitialization(pl);
+
+            YourActionInitialization * actionInitialization = new YourActionInitialization(detector);
+            runManager->SetUserInitialization( actionInitialization );
+
+            runManager->Initialize();
+
+            G4UImanager * UImanager = G4UImanager::GetUIpointer();
+            UImanager->ApplyCommand("/tracking/verbose 1");
+            UImanager->ApplyCommand("/event/verbose 1");
+
+            runManager->BeamOn(1);
+
+            detector->SetTargetThickness(2*CLHEP::cm);
+
+            runManager->BeamOn(1);
+
+            return 0;
+        }
+
+If we inspect the printout, we will notice that the second run shows that the geometry changed but the primary particles start in the same position as before. This happens because our primary generator was not notified with the cnage of thickness. We will see in the following sessiosn how to address this elegantly, but for now we can simply call the `UpdatePosition` method before generating each primary, so the method of `YourPrimaryGeneratorAction` would look like this::
+
+    void YourPrimaryGeneratorAction::GeneratePrimaries(G4Event* evt) {
+        UpdatePosition();
+        fParticleGun->GeneratePrimaryVertex(evt);
+    }
+
+If we recompile and run, we will see that the position of the primary electron is now correct.
+
+
+Importance of notifying of geometry changes to the run manager
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When we set a new target thickness, we added a line to notify the run manager that geometry has changed::
+
+    void YourDetectorConstruction::SetTargetThickness(G4double thickness){
+        fTargetThickness = thickness;
+        G4RunManager::GetRunManager()->ReinitializeGeometry();
+    }
+
+We can play to remove that line, recompile and run again to see what happens. Now the call to `YourDetectorConstruction::Construct` is not done, the printout does not appear.
 

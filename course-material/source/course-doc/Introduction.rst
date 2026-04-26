@@ -56,11 +56,13 @@ The general flow of a Geant4 simulation is the following:
 
    - Each particle is tracked separately (they do not know about each other). Each particle can create other particles, called *secondary particles* (e.g. by ionization)
 
-   - When particles are injected into the simulation, they are placed in a *stack* to wait. Then, in a loop, Geant4 take one and start simulating its pasage through matter, until either is absorbed, destroyed, decays, thermalizes or reach the end of the world. If new secondary particles are created, they are added to the stack
+   - When particles are injected into the simulation, they are placed in a *stack* to wait. Then, in a loop, Geant4 simulates the particles one by one, and start simulating its pasage through matter, until either is absorbed, destroyed, decays, thermalizes or reach the end of the world. If new secondary particles are created, they are added to the stack
 
    - In Geant4, a *track* represents a status of a given particle (postion, momentum, polarization, etc). The Geant4 *track* is not related to the HEP concept of *reconstructed track*
 
-   - A particle is pushed to jump a *step* by Geant4 navigator, and each step is limited in length by either geometry boundaries or physical processes.
+   - A particle is pushed to jump a *step* by Geant4 navigator, and each step is limited in length by either geometry boundaries or physical processes
+
+   -The event ends when all primary and the subsequent secondary particles are track to the end (when particle is either absorbed, destroyed, decayed, thermalized or reaches the end of the world)
 
 The mandatory components to run a Geant4 simulation are the geometry description, the physics and the primary particle generation. These components are registered in a central object that we have to create in our own main program, called **G4RunManager**. We will review them in the following sections, and come back to them when we write the corresponding code.
 
