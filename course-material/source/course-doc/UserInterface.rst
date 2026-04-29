@@ -8,13 +8,14 @@ Geant4 is a toolking, a collection of classes that allow us to define our proble
 
 Assembling the pieces of Geant4 toolkit is also known as developping a Geant4 application. This require some knowledge of C++ and the toolkit itself. However, the end-user may configure the application without the need of touching C++ by using the so-called User Interfaces.
 
-Some parts of the toolkit implement some User Interface that could allow us to configure the physics or the primary particle generator (because the `G4ParticleGun` define its own user interface). The application developer can implement new User Interfaces.
+Some parts of the toolkit implement an User Interface, for example most of the physics modules or the `G4ParticleGun`, allowing us to configure the physics and the primary generator respectively. In addition. the application developer can implement new User Interfaces.
 
-The UI commands consist in 3 parts. For example `/tracking/verbose 1` has a directory `/tracking/`, a command `verbose` and a parameter `1`. The directory structure is used to group the commands (not only tracking may have a command to configure its verbosity). The parameters sometimes are optional, are given separated by spaces, and can be any basic type (strings should be delimited by quotes). An exclamation mark can be used as a placeholder for a parameter without specifying its value (the default value will be used).
+The UI commands consist in 3 parts. For example, in the previous UI command that we used to show the steps during the simulation `/tracking/verbose 1` has a directory `/tracking/`, a command `verbose` and a parameter `1`. The directory structure is used to group the commands (not only tracking may have a command to configure its verbosity). The parameters sometimes are optional, are given separated by spaces, and can be any basic type (strings should be delimited by quotes). An exclamation mark can be used as a placeholder for a parameter without specifying its value (the default value will be used).
 
 There are 3 ways of submitting the UI commands:
 
 - batch mode. Only `G4UImanager` manager is needed. There are two options for batch mode:
+
     - batch mode hardcoded commands in the application, like here :ref:`RunManagerInitializeBeamOn`::
 
             // after initializing Run Manager
@@ -43,7 +44,8 @@ There are 3 ways of submitting the UI commands:
 
 The availability of the commmands may vary depending on the state of the run manager (for example `/run/beamOn 1` is available only in idle state). Some comands require the Run Manager to be initialized first, or the opposite.
 
-Commands may be refused for a number of reasons
+Commands may be refused for a number of reasons:
+
 - wrong run manager state
 - wrong type of parameter
 - wrong number of parameters
@@ -79,7 +81,7 @@ The example `basic/B1/exampleB1.cc` shows how to run a macro file in batch mode 
         delete ui;
     }
 
-Geant4 provides many different types of interfaces: Qt-GUI, GAG-GUI(java based), Xm-GUI (Motif based) or simple shell-like terminals (tcsh, csh). All types derive from the base class `G4UIsession`. After being created, it is setup by calling its method `SessionStart()`. The `G4UIExecutive` will select the most appropriate UI type available in the current environment (Graphical UI sessions have higher priority than terminal-like ones). We can also tell `G4UIExecutive` to try to select one in particular, for instance to select `tcsh`::
+Geant4 provides many different types of interfaces, either graphical (Qt-GUI, java-based GAG-GUI, Motif-based Xm-GUI) or shell-like terminals (tcsh, csh). All types derive from the base class `G4UIsession`. After being created, the method `SessionStart()` has to be called to set it up. By instantiating a `G4UIExecutive` object, Geant4 selects the most appropriate UI type available in the current environment (Graphical UI sessions have higher priority than terminal-like ones). We can also tell `G4UIExecutive` to try to select one in particular, for instance to select `tcsh` instead of others we can pass it as optional argument::
 
     ui = new G4UIExecutive(argc, argv, "tcsh");
 
@@ -91,6 +93,7 @@ New UI commands can be defined by the application developer as indicated here:
 http://geant4-userdoc.web.cern.ch/geant4-userdoc/UsersGuides/ForApplicationDeveloper/html/Control/userInterfaceCommand.html
 
 One can use the application to get a list of available commands including the custom ones by:
+
 - plain text format to standard output `/control/manual [directory]`
 - HTML file(s) - one file per one (sub-)directory `/control/createHTML [directory]`
 
@@ -100,9 +103,11 @@ Macro files
 Macro files are text file with a list of UI commands. All commands must be defined with the full directory. If the line starts by `#` it is consider a comment.
 
 Macro files can be executed interactively, by typing::
+
     > /control/execute macro_file_name
 
 or by hardcoding the execution in C++ as we saw before::
+
             G4UImanager * UImanager = G4UImanager::GetUIpointer();
             UImanager->ApplyCommand("/control/execute macro_file_name");
 
@@ -113,12 +118,11 @@ Interactive session
 
 Interactive terminal can interpret some commands that have no effect on the Geant4 kernel and they cannot be used in a macro file (only in interactive session)
 
-- cd, pwd - change and display current command directory. By setting the current command directory, you may omit (part of) directory
-string
-- ls - list available UI commands and sub-directories
-- history - show previous commands
-- !historyID - re-issue previous command
+- cd, pwd : change and display current command directory. By setting the current command directory, you may omit (part of) directory string
+- ls : list available UI commands and sub-directories
+- history : show previous commands
+- !historyID : re-issue previous command
 - arrow keys and tab (TC-shell only)
-- ?UIcommand - show current parameter values of the command
-- help [UIcommand] - help
-- exit - job termination
+- ?UIcommand : show current parameter values of the command
+- help [UIcommand] : help
+- exit : job termination
