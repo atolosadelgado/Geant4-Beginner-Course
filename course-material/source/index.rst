@@ -14,6 +14,7 @@ This material was prepared for an interactive hands-on based tutorial course int
 
 The course is expected to be of interest to novices and those with basic or partial familiarity with :guilabel:`Geant4`. Participants are expected to have a reasonable knowledge of C++.
 
+This document has 2 main chapters: Course Material and Application development. The application development chapter shows how to implement a minimal code related to each section of the Course Material. Therefore, for this course we will be jumping from a Course Material section which introduces the basic concepts, to the corresponding Application development section that shows how to implement those topics and allow the user to learn by doing.
 
 
 .. raw:: latex
