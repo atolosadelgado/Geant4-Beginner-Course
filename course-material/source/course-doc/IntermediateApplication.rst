@@ -626,6 +626,8 @@ The final step is to register an instance of `YourActionInitialization` into the
 
 If we compile and run, we should see the same output as before. The next section explains how to run a simulation by simply adding another 2 lines in the main function.
 
+.. _RunManagerInitializeBeamOn:
+
 Run manager initialize and BeamOn methods
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -832,3 +834,245 @@ When we set a new target thickness, we added a line to notify the run manager th
 
 We can play to remove that line, recompile and run again to see what happens. Now the call to `YourDetectorConstruction::Construct` is not done, the printout does not appear.
 
+UI session
+----------
+
+In a previous section :ref:`UserInterface` we have reviewed the different types of UI sessions. We can implement an optional behaviour: if we provide an argument to the executable, we will assume if the name of a macro file, that we will execute in batch mode and then we will exit the application. If we do not provide any argument, we will start an interactive session with the preferred session, which will be a graphical interface based on Qt. After implementing the `G4UIExecutive` and the control flow to decide what to do, the main function should look like this::
+
+        #include "YourDetectorConstruction.hh"
+        #include "YourActionInitialization.hh"
+
+        #include "G4PhysListFactory.hh" // to retrieve reference physics list
+        #include "G4RunManagerFactory.hh" // to produce default G4RunManager
+        #include "G4UImanager.hh" // to pass some built-in UI commands
+        #include "G4UIExecutive.hh" // for interactive session
+
+        int main(int argc, char** argv){
+            // Detect interactive mode (if no arguments) and define UI session
+            G4UIExecutive* ui = nullptr;
+            G4String macroFileName;
+            if (argc == 1) {
+                ui = new G4UIExecutive(argc, argv);
+            }
+            else{
+                macroFileName = argv[1];
+            }
+
+            auto * runManager = G4RunManagerFactory::CreateRunManager();
+            runManager->SetNumberOfThreads(1);
+
+            YourDetectorConstruction* detector = new YourDetectorConstruction();
+            runManager->SetUserInitialization(detector);
+
+            const G4String plName = "FTFP_BERT";
+            G4PhysListFactory plFactory;
+            plFactory.SetVerbose(0);
+            G4VModularPhysicsList *pl = plFactory.GetReferencePhysList( plName );
+            runManager->SetUserInitialization(pl);
+
+            YourActionInitialization * actionInitialization = new YourActionInitialization(detector);
+            runManager->SetUserInitialization( actionInitialization );
+
+            // runManager->Initialize();
+            //
+            // 	G4UImanager * UImanager = G4UImanager::GetUIpointer();
+            // 	UImanager->ApplyCommand("/tracking/verbose 1");
+            // 	UImanager->ApplyCommand("/event/verbose 1");
+            //
+            // 	runManager->BeamOn(1);
+            //
+            // 	detector->SetTargetThickness(2*CLHEP::cm);
+            //
+            //
+            // 	runManager->BeamOn(1);
+            // Get the pointer to the User Interface manager
+            auto UImanager = G4UImanager::GetUIpointer();
+
+            // Process macro in batch mode
+            if (!ui) {
+                G4String command = "/control/execute ";
+                UImanager->ApplyCommand(command + macroFileName);
+            }
+            else {
+                // interactive mode
+                ui->SessionStart();
+                delete ui;
+            }
+
+            delete runManager;
+            return 0;
+        }
+
+After compiling and launching the program, a new window will open. On the left we have a menu with Geant4 UI commands. We can try to look for our command we used to increate the verbosity of the tracking. If we try to start a simulation with the command `/run/beamOn 1`, an error message will happen::
+
+    Geant4 kernel should be initialized
+    before the first BeamOn(). - BeamOn ignored.
+
+This is caused by the run manager not being initialized (commented line `runManager->Initialize();`). In general, the applicability of some commands depends on the status of the Run Manager. We can use the UI command to Initialize the Run Manager, for example by typing in the terminal the following::
+
+    /run/initialize
+
+If we now try to run a simulation, it will printout the message we saw earlier.
+
+We can specify the type of session we would like, instead of letting Geant4 decide. For example, we can ask for a terminal-like session by adding a third argument to the constructor of the `G4UIExecutive`::
+
+    ui = new G4UIExecutive(argc, argv),"tcsh");
+
+Now we simple stay in the terminal, instead of a new window popping up. Notice that the promt representes the state of the Geant4 Run Manager (`PreInit`, `Idle`, etc). See `G4ApplicationState.hh` for further details.
+
+Configuring the primary generator using UI commands
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Our primary generator uses the Geant4 class `G4ParticleGun`. This class defines some UI commands in `/gun/` directory, and we can use these commands to configure it without writing C++ code. We can start by printing the usage of the `/gun` directory::
+
+        PreInit> /control/manual /gun/
+        Command directory path : /gun/
+
+
+        Guidance :
+        Particle Gun control commands.
+
+        Sub-directories :
+        Commands :
+        List * List available particles.
+        particle * Set particle to be generated.
+        direction * Set momentum direction.
+        energy * Set kinetic energy.
+        momentum * Set momentum. This command is equivalent to two commands
+        momentumAmp * Set absolute value of momentum.
+        position * Set starting position of the particle.
+        time * Set initial time of the particle.
+        polarization * Set polarization.
+        number * Set number of particles to be generated.
+        ion * Set properties of ion to be generated.
+        ionL * THIS COMMAND IS DEPRECATED and will be removed in future releases.
+        checkVolume * Switch on/off the check if the vertex position is inside the world volume.
+        ...
+
+We can use `/gun/list` to list the available particles. We can select gamma as particle by doing::
+
+        /gun/particle gamma
+
+For the energy, we can scroll in the previous printout and look for the command `/gun/energy`::
+
+        Command /gun/energy
+        Guidance :
+        Set kinetic energy.
+
+        Parameter : Energy
+        Parameter type  : d
+        Omittable       : True
+        Default value   : taken from the current value
+
+        Parameter : Unit
+        Parameter type  : s
+        Omittable       : True
+        Default value   : GeV
+        Candidates      : eV keV MeV GeV TeV PeV meV J electronvolt kiloelectronvolt megaelectronvolt gigaelectronvolt teraelectronvolt petaelectronvolt millielectronVolt joule
+
+We can select an energy of 500 keV::
+
+        /gun/energy 500 keV
+
+We can take a look to the `G4ParticleGunMessenger.hh` to see the implementation.
+
+.. _IntermediateApplicationVisualization:
+
+Adding the Visualization Manager (interactive)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Geant4 graphics interface is provided by the Visualization Manager `G4VisManager` base class (with the `RegisterGraphicsSystems()` pure virtual method)
+
+Similarly to the UI session, Geant4 provides the G4VisExecutive as one implementation of this interface,that can be used directly in the main method of the application:
+- include the default Visualization Manager i.e. G4VisExecutive
+- create the Visualization Manager object and initialise it before the run
+- delete the Visualization Manager object at the end of the application
+
+We can add the Visualization Executive by adding these lines to our main (just before creating the `G4UImanager`)::
+
+		G4VisExecutive * VisManager = new G4VisExecutive();
+		VisManager->Initialise();
+
+If we recompile and run, we will see some messages related to the visualization after initializing the run manager::
+
+    You have successfully registered the following graphics systems.
+    Registered graphics systems are:
+    ASCIITree (ATree)
+    DAWNFILE (DAWNFILE)
+    RayTracer (RT)
+    VRML2FILE (VRML2FILE)
+    gMocrenFile (gMocrenFile)
+    TOOLSSG_OFFSCREEN (TSG_OFFSCREEN, TSG_FILE)
+    OpenGLImmediateQt (OGLIQt, OGLI)
+    OpenGLStoredQt (OGLSQt, OGLS)
+    OpenGLImmediateX (OGLIX, OGLIQt_FALLBACK)
+    OpenGLStoredX (OGLSX, OGLSQt_FALLBACK)
+    RayTracerQt (RTQt)
+    TOOLSSG_X11_GLES (TSG_X11_GLES, TSGX11, TSG_QT_GLES_FALLBACK)
+    TOOLSSG_X11_ZB (TSG_X11_ZB, TSGX11ZB)
+    TOOLSSG_QT_GLES (TSG_QT_GLES, TSGQt, TSG, OGL)
+    TOOLSSG_QT_ZB (TSG_QT_ZB, TSGQtZB, TSGZB)
+    You may choose a graphics system (driver) with a parameter of
+    the command "/vis/open" or "/vis/sceneHandler/create",
+    or you may omit the driver parameter and choose at run time:
+    - by argument in the construction of G4VisExecutive;
+    - by environment variable "G4VIS_DEFAULT_DRIVER";
+    - by entry in "~/.g4session";
+    - by build flags.
+    - Note: This feature is not allowed in batch mode.
+    For further information see "examples/basic/B1/exampleB1.cc"
+    and "vis.mac".
+
+
+Then we can investigate the different parts of the Qt window:
+- the main visualization pad (we can create several tabs)
+- the terminal space below, with the output from Geant4 kernel and the interactive input box
+- the menu on the left, where we can select the UI commands, navigate the scene tree, visualize the event as a movie, or see the history of commands
+- toolbar on top, where some buttons encapsulate some functionality
+
+Then, we can run the following commands to display the geometry::
+
+    /vis/open OGL
+    /vis/drawVolume
+
+If we now run the simulation, we will simply see the printout (in case we enable the `/tracking/verbosity 1` as before). However, we can visualize the tracjectory of each particle during one event if we add these commands to accumulate the simulation information and display it at the end of the event::
+
+    /vis/scene/add/trajectories
+    /vis/scene/endOfEventAction accumulate 100
+    /run/beamOn 100
+
+
+We can change the point of view, with a UI command (or the mouse in case of Qt+openGL)::
+
+    /vis/viewer/set/viewpointThetaPhi -40 -50
+
+To finish the interactive session, we can type `exit`.
+
+We have reviewed the UI commands to configure the particle gun and visualize the geometry and the particle trajectories. Now we can collect them in a text file which we can later execute to visualize the run. In a file called `g4macro_vis.mac` we can write the following::
+
+    # Lines starting by # are comments
+
+    # Set the tracking verbose to see each simulation step
+    /tracking/verbose 0
+
+    # Run initialization
+    /run/initialize
+
+    # Set the primary particle type and energy
+    /gun/energy 4 MeV
+    /gun/particle e-
+
+    # open Visualization and draw full geometry
+    /vis/open OGL
+    /vis/drawVolume
+
+    # configure the scene to accumulate trajectories over 100 events
+    /vis/scene/add/trajectories
+    /vis/scene/endOfEventAction accumulate 100
+
+    # run 100 events
+    /run/beamOn 100
+
+We can execute our application, and in the terminal write the following command to execute this macro file::
+
+    /control/execute g4macro_vis.mac
