@@ -464,14 +464,30 @@ The function ``find_package`` will load all the environmental variables and flag
    for one of the Geant4 example application, and spot the similarities and differences with respect to our file
 
 
-First, we need to **configure** the build, using ``cmake`` as follows::
+.. First, we need to **configure** the build, using ``cmake`` as follows::
+..
+..   bash-3.2$ cmake -S . -B build
+..
+.. where the ``cmake`` option ``-S`` is used to point to the source code directory, ``-B`` to point to the build directory (used for temporal storage).:ttt:`CMake` requires the location of the :guilabel:`Geant4` toolkit :ttt:`CMake` configuration file, that
+.. has been installed under the :file:`$G4INSTALL/lib64/`. We can use the syntax ``-D VAR=NEW_VALUE`` to tell CMake where to find the installation directory in case we did not gone throught the post-installation step (:ref:`ref_G4-post-installation`)::
+..
+..   bash-3.2$ cmake -S . -B build -D Geant4_DIR=$G4INSTALL/lib64/
 
-  bash-3.2$ cmake -S . -B build
+First, we need to **configure** the build using ``cmake``. There are two options to let :ttt:`CMake` know where the installation of Geant4 is:
 
-where the ``cmake`` option ``-S`` is used to point to the source code directory, ``-B`` to point to the build directory (used for temporal storage).:ttt:`CMake` requires the location of the :guilabel:`Geant4` toolkit :ttt:`CMake` configuration file, that
-has been installed under the :file:`$G4INSTALL/lib64/`. We can use the syntax ``-D VAR=NEW_VALUE`` to tell CMake where to find the installation directory in case we did not gone throught the post-installation step (:ref:`ref_G4-post-installation`)::
+- Before configuring the project, we source a bash script that will setup all needed Geant4 environmental variables (see :ref:`ref_G4-post-installation`), and then we configure the project normally::
 
-  bash-3.2$ cmake -S . -B build -D Geant4_DIR=$G4INSTALL/lib64/
+    bash-3.2$ source $G4INSTALL/bin/geant4.sh
+    bash-3.2$ cmake -S . -B build
+
+- We pass the install directory as a flag::
+
+    bash-3.2$ cmake -S . -B build -D CMAKE_PREFIX_PATH=$G4INSTALL
+
+The ``cmake`` arguments stand for:
+  - ``-S`` is used to point to the source code directory,
+  - ``-B`` to point to the build directory (used for temporal storage)
+  - ``-D VAR=NEW_VALUE`` is the general syntax to pass any configuration flag, in our case, the path to the installation
 
 To **compile** the source code, we use the following command::
 
@@ -490,8 +506,6 @@ We can add a printout in the ``CMakeLists.txt`` ::
 If run again the **configure** step, it will printout the libraries that CMake find and use to link our application::
 
   ---> We print out the value of Geant4_LIBRARIES: Geant4::G4Tree;Geant4::G4FR;Geant4::G4GMocren;Geant4::G4visHepRep;Geant4::G4RayTracer;Geant4::G4VRML;Geant4::G4ToolsSG;Geant4::G4vis_management;Geant4::G4modeling;Geant4::G4interfaces;Geant4::G4mctruth;Geant4::G4geomtext;Geant4::G4gdml;Geant4::G4analysis;Geant4::G4error_propagation;Geant4::G4readout;Geant4::G4physicslists;Geant4::G4run;Geant4::G4event;Geant4::G4tracking;Geant4::G4parmodels;Geant4::G4processes;Geant4::G4digits_hits;Geant4::G4track;Geant4::G4particles;Geant4::G4geometry;Geant4::G4materials;Geant4::G4graphics_reps;Geant4::G4intercoms;Geant4::G4global;Geant4::G4tools;Geant4::G4clhep;Geant4::G4ptl
-
-
 
 .. admonition:: **Take-home**
    :class: takehome
