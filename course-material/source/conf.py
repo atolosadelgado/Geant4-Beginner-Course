@@ -133,8 +133,6 @@ latex_elements = {
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
-\usepackage{bm}
-\usepackage{bbm}
 \usepackage{booktabs}
 \usepackage{rotating,tabularx}
 \usepackage{multirow}
@@ -145,6 +143,14 @@ latex_elements = {
 % Make codeblocks smaller
 \usepackage{etoolbox}
 \AtBeginEnvironment{sphinxVerbatim}{\footnotesize}
+
+\usepackage{hyperref}
+\hypersetup{
+    bookmarksdepth=4,
+    bookmarksopen=true,
+    bookmarksopenlevel=2,
+    pdfpagemode=UseOutlines
+}
 """,
 
     'maketitle': r'''
