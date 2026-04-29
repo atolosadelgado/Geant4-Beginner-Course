@@ -886,7 +886,7 @@ In a previous section :ref:`UserInterface` we have reviewed the different types 
             //
             // 	runManager->BeamOn(1);
             // Get the pointer to the User Interface manager
-            auto UImanager = G4UImanager::GetUIpointer();
+            G4UImanager * UImanager = G4UImanager::GetUIpointer();
 
             // Process macro in batch mode
             if (!ui) {
@@ -903,7 +903,7 @@ In a previous section :ref:`UserInterface` we have reviewed the different types 
             return 0;
         }
 
-After compiling and launching the program, a new window will open. On the left we have a menu with Geant4 UI commands. We can try to look for our command we used to increate the verbosity of the tracking. If we try to start a simulation with the command `/run/beamOn 1`, an error message will happen::
+After compiling and launching the program, a new window will open. This is because the Geant4 in the virtual machine was compiled with Qt and OpenGL, and Geant4 selects this as default option. On the left we have a menu with Geant4 UI commands. We can try to look for our command we used to increate the verbosity of the tracking. If we try to start a simulation with the command `/run/beamOn 1`, an error message will happen::
 
     Geant4 kernel should be initialized
     before the first BeamOn(). - BeamOn ignored.
@@ -912,7 +912,7 @@ This is caused by the run manager not being initialized (commented line `runMana
 
     /run/initialize
 
-If we now try to run a simulation, it will printout the message we saw earlier.
+If we now try to run a simulation, it will printout the individual steps during the simulation as before.
 
 We can specify the type of session we would like, instead of letting Geant4 decide. For example, we can ask for a terminal-like session by adding a third argument to the constructor of the `G4UIExecutive`::
 
@@ -923,7 +923,7 @@ Now we simple stay in the terminal, instead of a new window popping up. Notice t
 Configuring the primary generator using UI commands
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Our primary generator uses the Geant4 class `G4ParticleGun`. This class defines some UI commands in `/gun/` directory, and we can use these commands to configure it without writing C++ code. We can start by printing the usage of the `/gun` directory::
+Our primary generator uses the Geant4 class `G4ParticleGun`. This class defines some UI commands, added to the `/gun/` directory. We can use these commands to configure it without writing C++ code. We can start by printing the usage of the `/gun` directory::
 
         PreInit> /control/manual /gun/
         Command directory path : /gun/
@@ -974,7 +974,7 @@ We can select an energy of 500 keV::
 
         /gun/energy 500 keV
 
-We can take a look to the `G4ParticleGunMessenger.hh` to see the implementation.
+We can take a look to the `G4ParticleGunMessenger.hh` to see the implementation of these commands.
 
 .. _IntermediateApplicationVisualization:
 
@@ -983,17 +983,22 @@ Adding the Visualization Manager (interactive)
 
 Geant4 graphics interface is provided by the Visualization Manager `G4VisManager` base class (with the `RegisterGraphicsSystems()` pure virtual method)
 
-Similarly to the UI session, Geant4 provides the G4VisExecutive as one implementation of this interface,that can be used directly in the main method of the application:
-- include the default Visualization Manager i.e. G4VisExecutive
-- create the Visualization Manager object and initialise it before the run
-- delete the Visualization Manager object at the end of the application
+Similarly to the UI session, Geant4 provides the G4VisExecutive as one implementation of this interface, that can be used directly in the main method of the application:
 
-We can add the Visualization Executive by adding these lines to our main (just before creating the `G4UImanager`)::
+- include `G4VisExecutive.hh` ::
+
+        #include "G4VisExecutive.hh"
+
+- create the Visualization Manager object (Geant4 will choose a Visualization manager based on its configuration), and initialise the Visualization Manager before the run. We can add the Visualization Executive by adding these lines to our main (just before creating the `G4UImanager`)::
 
 		G4VisExecutive * VisManager = new G4VisExecutive();
 		VisManager->Initialise();
 
-If we recompile and run, we will see some messages related to the visualization after initializing the run manager::
+- delete the Visualization Manager object at the end of the application::
+
+        delete VisManager;
+
+This class can be used even if Geant4 was configured without visualization because there is a number of drivers that are always available and can create output files (non-interactive visualization). If we recompile and run, we will see some messages related to the visualization after initializing the run manager::
 
     You have successfully registered the following graphics systems.
     Registered graphics systems are:
@@ -1025,6 +1030,7 @@ If we recompile and run, we will see some messages related to the visualization 
 
 
 Then we can investigate the different parts of the Qt window:
+
 - the main visualization pad (we can create several tabs)
 - the terminal space below, with the output from Geant4 kernel and the interactive input box
 - the menu on the left, where we can select the UI commands, navigate the scene tree, visualize the event as a movie, or see the history of commands
