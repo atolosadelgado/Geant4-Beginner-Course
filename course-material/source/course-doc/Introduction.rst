@@ -62,7 +62,7 @@ The general flow of a Geant4 simulation is the following:
 
    - A particle is pushed to jump a *step* by Geant4 navigator, and each step is limited in length by either geometry boundaries or physical processes
 
-   -The event ends when all primary and the subsequent secondary particles are track to the end (when particle is either absorbed, destroyed, decayed, thermalized or reaches the end of the world)
+   - The event ends when all primary and the subsequent secondary particles are track to the end (when particle is either absorbed, destroyed, decayed, thermalized or reaches the end of the world)
 
 The mandatory components to run a Geant4 simulation are the geometry description, the physics and the primary particle generation. These components are registered in a central object that we have to create in our own main program, called **G4RunManager**. We will review them in the following sections, and come back to them when we write the corresponding code.
 
@@ -89,7 +89,7 @@ interfaces provided by the Geant4 toolkit (the concept of interface is reviewed 
 
       - additional, optional user actions (G4UserRunAction, G4UserEventAction, G4UserSteppingAction, etc)
 
-- MT note: G4MTRunManager object needs to be created in case of Geant4 MT
+- Multithreading (MT) note: G4MTRunManager object needs to be created in case of Geant4 MT
 
 The G4VUserDetectorConstruction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -103,6 +103,7 @@ invoked by the G4RunManager at initialisation
 
 We have to implement our own detector description, e.g. YourDetectorConstruction class, derived from this
 base class and (at minimum) implement the Construct() interface method. This method is expected to perform the following:
+
 - create all materials will need to use in your geometry
 - describe your detector geometry by creating and positioning all volumes
 - return the pointer to the root of your geometry hierarchy i.e. the pointer to your “World”
@@ -181,6 +182,7 @@ In the next few days we will build step by step a simple particle transport appl
 We will start from very simple C++ programs and progressively during the course we will introduce the Geant4 components needed to reproduce the type of simulation you have just seen in the live demo.
 
 We will first implement an minimal application to run a Geant4 simulation (source code in *intermediate application*). This will run a simulation without recording any data. To do so, we need to implement the mandatory components mentioned before:
+
 - YourDetectorConstruction: a simple box (shape) as the detector/target made of silicon (material), placed in another box (shape) *world* volume filled with low density hydrogen gas (*universe*).
 - YourPhysicsList: we will use one of the pre-defined, ready-to-use physics list provided by the Geant4 toolkit (therefore no need to write any user physics list class)
 - YourPrimaryGeneratorAction: a simple particle gun (G4ParticleGun) that generates a single primary particle per event with pre-defined particle type and kinematics pointing toward to our target.
