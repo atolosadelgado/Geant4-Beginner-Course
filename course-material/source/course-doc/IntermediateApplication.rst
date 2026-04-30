@@ -1715,3 +1715,92 @@ And if we recompile and run again, the output will look like this::
     G4WT0 >  Mean energy deposited in the target per event : 4.25237 MeV
 
 
+Update gun position in YourRunAction::BeginOfRunAction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We can pass `YourPrimaryGenerator` to `YourRunAction`, so it setups the gun position before starting the run. For that, we need to update 3 files:
+
+1. `YourRunAction.hh`: we have to extend the contructor to take as argument a pointer to the primary generator action object, and store it internally in a new member::
+
+        #ifndef YourRunAction_hh
+        #define YourRunAction_hh
+
+        #include "G4UserRunAction.hh"
+
+        class YourPrimaryGeneratorAction;
+
+        class YourRunAction : public G4UserRunAction
+        {
+            public:
+                YourRunAction(YourPrimaryGeneratorAction * pgenerator);
+                ~YourRunAction() override;
+
+                void BeginOfRunAction(const G4Run * ) override;
+                void EndOfRunAction(const G4Run * ) override;
+
+                void AddEventEdep(G4double val){fEdepInTarget+=val;}
+        private:
+            G4double fEdepInTarget{0};
+            YourPrimaryGeneratorAction * fPrimaryGeneratorAction;
+
+        };
+
+        #endif // YourRunAction_hh
+
+2. `YourRunAction.cc` : we have to initialize the pointer to the primary generator action in the constructor, and call the  `YourPrimaryGeneratorAction::UpdatePosition` in the begin run action method::
+
+    #include "YourRunAction.hh"
+    #include "YourPrimaryGeneratorAction.hh"
+
+    #include "G4Run.hh"
+    #include "G4SystemOfUnits.hh"
+    #include "globals.hh"
+
+    YourRunAction::YourRunAction(YourPrimaryGeneratorAction * pgenerator):
+            G4UserRunAction(),
+            fPrimaryGeneratorAction(pgenerator){}
+
+    YourRunAction::~YourRunAction(){}
+
+    void YourRunAction::BeginOfRunAction(const G4Run *){
+        // reset accumulator before each run
+        fEdepInTarget = 0.0;
+        fPrimaryGeneratorAction->UpdatePosition();
+    }
+
+    void YourRunAction::EndOfRunAction(const G4Run * run){
+
+        G4int numberOfEvent = run->GetNumberOfEvent();
+        G4double edepAverage = fEdepInTarget  / numberOfEvent;
+        G4cout << " Mean energy deposited in the target per event : "
+               << edepAverage / CLHEP::MeV
+               << " MeV"
+               << G4endl;
+    }
+
+3. `YourActionInitialization.cc`: when instantiating the object runAction, pass the pointer to the primary generator::
+
+    #include "YourActionInitialization.hh"
+    #include "YourPrimaryGeneratorAction.hh"
+    #include "YourSteppingAction.hh"
+    #include "YourEventAction.hh"
+    #include "YourRunAction.hh"
+
+    YourActionInitialization::YourActionInitialization(YourDetectorConstruction * det):G4VUserActionInitialization(),fDetector(det){}
+
+    YourActionInitialization::~YourActionInitialization(){}
+
+    void YourActionInitialization::Build() const {
+        YourPrimaryGeneratorAction* primaryAction = new YourPrimaryGeneratorAction(fDetector);
+        SetUserAction(primaryAction);
+
+        YourRunAction * runAction = new YourRunAction(primaryAction);
+        SetUserAction(runAction);
+
+        YourEventAction * eventAction = new YourEventAction(runAction);
+        SetUserAction(eventAction);
+
+        YourSteppingAction * stepAction = new YourSteppingAction(fDetector,eventAction);
+        SetUserAction(stepAction);
+
+    }
