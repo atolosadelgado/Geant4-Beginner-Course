@@ -9,23 +9,30 @@ In Geant4, We call "detector description" to the description of the materials an
 Unit system
 ...........
 
-CLHEP, centralized system of units. do not match ROOT units. use "using CLHEP::GeV" with care, avoid loading full namespace
+Geant4 uses the unit system defined in CLHEP (Class Library for High Energy Physics). This system is consistent within the toolkit, but it does not match with other frameworks such as ROOT, so special attention must be given if a combination of both happens.
 
-#include "G4SystemOfUnits.hh"
+To use the system of units we have to load this header::
 
-There are some natural units of Geant4 (ns, mm, eplus, MeV, radian, kelvin, candela, steradian). The units live in the CLHEP namespace. That means that to use the unit gram, we have to call it as "CLHEP::g". When printing quantities, remember to divide by the unit, e.g.::
+    #include "G4SystemOfUnits.hh"
+
+
+There are some natural units of Geant4 (ns, mm, eplus, MeV, radian, kelvin, candela, steradian). The units live in the CLHEP namespace. That means that to use the unit gram, we have to call it as `CLHEP::g`. When printing quantities, remember to divide by the unit, e.g.::
 
     G4cout << "Energy: " energy / CLHEP::eV << " eV" << G4endl;
 
-Tip: it is possible to use "using CLHEP::g;" after the include, to avoid repeating the CLHEP namespace each time we use the unit. However, it can lead to problems difficult to debug (if for example there is another variable called "g").
+.. warning::
 
-Tip: in C++, it is highly discouraged to load a full namespace into our program, as it can lead to bugs very difficult to solve. Please, never load full namespace like std or CLHEP.
+    Please avoid loading a full namespace into our program (`using CLHEP;`), as it can lead to bugs very difficult to solve.
+
+    It is possible to use `using CLHEP::g;` after the include, to avoid repeating the CLHEP namespace each time we use the unit. However, it can lead to problems difficult to debug (if for example there is another variable called `g`).
+
 
 
 Geant4 Material model
 .....................
 
 The material model of Geant4 resembles the natural definition: a material is made of elements, and an element is made of isotopes. The 3 main classes to describe these objects are
+
 - G4Isotope: describes the properties of isotopes (Z - atomic number, N - number of nucleons and A - molar mass) with unique name and index
 - G4Element: describes the properties of atoms (Z - effective atomic number, N - effective number of nucleons and A - effective molar mass, number of isotopes, etc.) with unique name, symbol and index
 - G4Material: describes the macroscopic properties of matter (density, state, temperature, pressure, etc.) with unique name and index
@@ -77,13 +84,14 @@ We can keep using the following cmake configuration `CMakeLists.txt`::
     target_link_libraries(ourmain ${Geant4_LIBRARIES})
 
 To configure and build our project, we write the following commands in a terminal in the directory where the files are::
+
     cmake -S . -B build
     cmake --build build
 
 Elements
 ^^^^^^^^
 
-Inspect header file G4Element.hh and learn what are the arguments for the constructor. We can start by building an element by ourselves, providing element name, symbol, effective atomic number (z) and atomic mass (a). Geant4 will make this element with the natural isotopic composition (the isotopes are deduced by the symbol). The atomic mass is not updated after assigning the isotopes. A minimal code to code this looks like this::
+Inspect header file G4Element.hh and learn what are the arguments for the constructor. We can start by building an element by ourselves, providing element name, symbol, atomic number (z) and atomic mass (a). Geant4 will make this element with the natural isotopic composition (the isotopes are deduced by the symbol). The atomic mass is not updated after assigning the isotopes. A minimal code to code this looks like this::
 
     #include "globals.hh" // G4cout, G4endl
 
@@ -115,7 +123,7 @@ And if we execute the code, we will see::
             --->  Isotope:   C12   Z =  6   N =  12   A =  12.00 g/mole   abundance: 98.930 %
             --->  Isotope:   C13   Z =  6   N =  13   A =  13.00 g/mole   abundance:  1.070 %
 
-TODO: why if Z is Zeff, it throws warning and round z to integer?
+.. TODO: why if Z is Zeff, it throws warning and round z to integer? Because it is not effective, it has to be exact!
 
 Alternatively, we can build the element from our custom set of isotopes::
 
@@ -161,7 +169,7 @@ And if we run it again, we will see this::
 Materials
 ^^^^^^^^^
 
-Materials can be made of one or several elements. The idea is similar to the construction of an element, we can let Geant4 create the natural element based on the atomic number of the material, or we can specify the combination of elements and materials by ourselves. The composition can be specified by either number of atoms (e.g., for a molecule) or mass fraction::
+Materials can be made of one or several elements. The idea is similar to the construction of an element, we can let Geant4 create the natural element based on the atomic number of the material, or we can specify the combination of elements and materials by ourselves. The composition can be specified as molecule/compound (fixed stoichiometry/number of atoms) or mixture (mass fraction), either way Geant4 will use effective elemental composition, and material effects are ignored::
 
     #include "globals.hh" // G4cout, G4endl
 
@@ -415,7 +423,7 @@ And the corresponding output looks like::
     Print NIST material that does not exist in the database
     Segmentation fault (core dumped)
 
-The segmentation fault message at the end is caused by the use of a null pointer. The NIST manager does not know any material with name "G4_PHILOSOPHERS-STONE", and it returns silently a null pointer. In the following line, we try to print the information of the pointer, and the program crashes. This issue is common when developping a Geant4 application. To ensure our program runs without problem, we have to add a protection against null pointers::
+The segmentation fault message at the end is caused by the use of a null pointer. The NIST manager does not know any material with name ``G4_PHILOSOPHERS-STONE``, and it returns silently a null pointer. In the following line, we try to print the information of the pointer, and the program crashes. This issue is common when developping a Geant4 application. To ensure our program runs without problem, we have to add a protection against null pointers::
 
         G4cout << "Print NIST material that does not exist in the database" << G4endl;
         const G4String matNamePhilosopherStone = "G4_PHILOSOPHERS-STONE";
@@ -438,8 +446,7 @@ The segmentation fault message at the end is caused by the use of a null pointer
    Geant4 gives control on the material definition down to isotopic composition. However, Geant4 predefined NIST materials cover most of the needs and ensures consistency of material properties. We will use NIST materials from now on.
 
 
-TODO: investigate if isotopic effect affects the Mean ionization energy, and investigate if relevant for scintillators
-TODO: is there a difference between material compound, molecule or mixture, or Geant4 treats all the same?
+.. TODO: is there a difference between material compound, molecule or mixture, or Geant4 treats all the same?
 
 Geant4 geometry model
 .....................
