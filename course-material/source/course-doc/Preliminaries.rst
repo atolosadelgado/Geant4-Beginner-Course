@@ -484,7 +484,9 @@ First, we need to **configure** the build using ``cmake``. There are two options
 
     bash-3.2$ cmake -S . -B build -D CMAKE_PREFIX_PATH=$G4INSTALL
 
+
 The ``cmake`` arguments stand for:
+
   - ``-S`` is used to point to the source code directory,
   - ``-B`` to point to the build directory (used for temporal storage)
   - ``-D VAR=NEW_VALUE`` is the general syntax to pass any configuration flag, in our case, the path to the installation
