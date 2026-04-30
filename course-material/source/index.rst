@@ -38,6 +38,7 @@ This document has 2 main chapters: Course Material and Application development. 
    course-doc/PhysicsLists
    course-doc/UserInterface
    course-doc/Visualization
+   course-doc/OptionalUserActions
 
 
 
