@@ -39,6 +39,8 @@ This document has 2 main chapters: Course Material and Application development. 
    course-doc/UserInterface
    course-doc/Visualization
    course-doc/OptionalUserActions
+   course-doc/MT
+   course-doc/CustomUIcommand
 
 
 
@@ -61,6 +63,24 @@ This document has 2 main chapters: Course Material and Application development. 
    :hidden:
 
    course-doc/IntermediateApplication
+
+.. raw:: latex
+
+   \newpage
+   \part{Final Application Documentation}
+   \vspace*{-0.8cm}
+   \par\noindent\rule{\textwidth}{1.0pt}\\
+   \vspace*{-1.0cm}
+   \par\noindent\rule{\textwidth}{1.0pt}
+   \vspace*{2.0cm}
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Intermediate Application Documentation
+   :hidden:
+
+   course-doc/FinalApplication
 ..
 ..    applications-doc/preliminaries/cpp-interface
 ..
