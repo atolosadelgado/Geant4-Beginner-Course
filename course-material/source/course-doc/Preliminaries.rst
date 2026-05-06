@@ -708,6 +708,7 @@ interface method is invoked by each Worker Threads (i.e. thread local objects cr
 
 .. admonition:: **Take-home**
    :class: takehome
+
    Minimal detector constructor must build a geometry tree and the corresponding materials
 
 .. _ref-G4VUserPhysicsList:
@@ -767,8 +768,6 @@ We will follow a build-from-scratch approach:
 Each new concept will be introduced only when it becomes necessary for the next step of implementation.
 
 We will frequently refer to the Geant4 Application Developer Guide and inspect example applications provided with the toolkit. The example applications, provided by the **toolkit developers** as part of the toolkit itself, serve as a good starting point for developing your own application. Try to find the closest to your needs, use it as a starting point and modify, extend according to your own modelling problem.
-
-
 
 
 In the next few days we will build step by step a simple particle transport application using the :guilabel:Geant4 toolkit.
