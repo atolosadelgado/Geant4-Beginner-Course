@@ -1264,3 +1264,246 @@ Writing our own UI commands
 Please take a look first to :ref:`CustomUIcommand`.
 
 
+We will implement 2 UI commands:
+
+- one to change the targe thickness, therefore it will take a numerical value and a string for the unit
+- another to change the target material, which will take only a string (we will retrieve the material from the Geant4 NIST material database)
+
+Implementing `YourDetectorConstructionMessenger`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To do so, we have to declare a new class `YourDetectorConstructionMessenger`, derived from base class `G4UImessenger`. An object `YourDetectorConstructionMessenger` will be instatiated in the constructor of `YourDetectorConstruction` and hold as private member to ensure memory deallocation in the destructor. In addition, the messenger will keep a pointer to the detector, passed in the constructor of the messenger. To break the circular dependency between the messenger and the detector constructor, we will use forward declarations, as we have been using all this time.
+
+In addition:
+
+- the constructor we will define a UI directory, and 2 UI commands (and they will have to be destroyed in the destructor)
+- when we actually use the UI command, the method `SetNewValue` will be called, therefore we have to override it in our implementation. This method will be responsible to make the connection between the arguments provided to the UI command, and the actual action to be taken, in our case upon the object type `YourDetectorConstruction`.
+
+
+The final header file will look like this ::
+
+    // File: YourDetectorConstructionMessenger.hh
+
+    #ifndef YourDetectorConstructionMessenger_hh
+    #define YourDetectorConstructionMessenger_hh
+
+    #include "G4UImessenger.hh"
+    #include "G4String.hh"
+
+    class YourDetectorConstruction;
+    class G4UIdirectory;
+    class G4UIcmdWithADoubleAndUnit;
+    class G4UIcmdWithAString;
+
+    class YourDetectorConstructionMessenger : public G4UImessenger {
+    public:
+        YourDetectorConstructionMessenger(YourDetectorConstruction*);
+        ~YourDetectorConstructionMessenger() override;
+
+        void SetNewValue(G4UIcommand* cmd, G4String newValues) override;
+
+    private:
+        YourDetectorConstruction * fDetector;
+
+        G4UIdirectory*             fDirCMD;
+        G4UIcmdWithADoubleAndUnit* fTargetThicknessCMD;
+        G4UIcmdWithAString*        fTargetMaterialCMD;
+
+    };
+
+    #endif // YourDetectorConstructionMessenger_hh
+
+And the implementation will look like this::
+
+    // File: YourDetectorConstructionMessenger.cc
+
+    #include "YourDetectorConstructionMessenger.hh"
+    #include "YourDetectorConstruction.hh"
+    #include "G4UIdirectory.hh"
+    #include "G4UIcmdWithADoubleAndUnit.hh"
+    #include "G4UIcmdWithAString.hh"
+
+    YourDetectorConstructionMessenger::YourDetectorConstructionMessenger(YourDetectorConstruction* det):
+        G4UImessenger(),
+        fDetector(det){
+
+            fDirCMD = new G4UIdirectory("/det/");
+            fDirCMD->SetGuidance(" CMD directory for YourDetector");
+
+            fTargetThicknessCMD = new G4UIcmdWithADoubleAndUnit("/det/setTargetThickness",this);
+            fTargetThicknessCMD->SetGuidance("Set target thickness");
+            G4bool isOmittable;
+            fTargetThicknessCMD->SetParameterName("TargetThickness",isOmittable=false);
+            fTargetThicknessCMD->SetUnitCategory("Length");
+            fTargetThicknessCMD->AvailableForStates(G4State_PreInit, G4State_Idle);
+
+
+
+            fTargetMaterialCMD = new G4UIcmdWithAString("/det/setTargetMaterial", this);
+            fTargetMaterialCMD->SetGuidance("Set target material from Geant4 NIST material database");
+            fTargetMaterialCMD->SetParameterName("TargetMaterial", isOmittable=false);
+            fTargetMaterialCMD->AvailableForStates(G4State_PreInit, G4State_Idle);
+
+
+    }
+
+    YourDetectorConstructionMessenger::~YourDetectorConstructionMessenger(){
+        delete fDirCMD;
+        delete fTargetThicknessCMD;
+        delete fTargetMaterialCMD;
+    }
+
+    void YourDetectorConstructionMessenger::SetNewValue(G4UIcommand* cmd, G4String newValues)
+    {
+        if(fTargetThicknessCMD==cmd){
+            G4double newThicknessValue = fTargetThicknessCMD->GetNewDoubleValue(newValues);
+            fDetector->SetTargetThickness(newThicknessValue);
+        }
+        else if(fTargetMaterialCMD==cmd){
+            fDetector->SetTargetMaterial(newValues);
+        }
+    }
+
+.. note::
+
+    The keyword ``this`` is a pointer to the object itself, in the previous code of type class `YourDetectorConstructionMessenger`. We were using it when creating the commands, to let Geant4 know that the command is owned by the messenger object.
+
+
+Adding `YourDetectorConstructionMessenger` to `YourDetectorConstruction`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We have to add the messenger as a new member of the class detector constructor as follows:
+
+.. code-block:: diff
+
+    // File: YourDetectorConstruction.hh
+
+    #ifndef YourDetectorConstruction_hh
+    #define YourDetectorConstruction_hh
+
+    #include "G4VUserDetectorConstruction.hh"
+
+    class G4Material;
+    +class YourDetectorConstructionMessenger;
+
+    class YourDetectorConstruction : public G4VUserDetectorConstruction {
+    // methods remain unchanged
+
+    private:
+        G4Material* fTargetMaterial{nullptr};
+        G4double    fTargetThickness{0.0};
+        G4VPhysicalVolume* fTargetPhysicalVolume{nullptr};
+    +    YourDetectorConstructionMessenger* fMessenger{nullptr};
+    };
+
+    #endif // YourDetectorConstruction_hh
+
+.. code-block:: diff
+
+    // File: YourDetectorConstruction.cc
+
+    #include "YourDetectorConstruction.hh"
+    +#include "YourDetectorConstructionMessenger.hh"
+
+    #include "globals.hh" // G4cout, G4endl
+    #include "G4PhysicalConstants.hh"
+
+    // for geometry definitions
+    #include "G4Box.hh"
+    #include "G4LogicalVolume.hh"
+    #include "G4PVPlacement.hh"
+
+    // for material definitions
+    #include "G4Material.hh"
+    #include "G4NistManager.hh"
+
+    #include "G4RunManager.hh"
+
+    YourDetectorConstruction::YourDetectorConstruction() : G4VUserDetectorConstruction() {
+        SetTargetMaterial("G4_Si");
+        SetTargetThickness(5.6*CLHEP::um);
+    +    fMessenger = new YourDetectorConstructionMessenger(this);
+    }
+
+    YourDetectorConstruction::~YourDetectorConstruction() {
+    +    delete fMessenger;
+    }
+
+    // the rest remain unchanged
+
+Recompile and run the executable without arguments, so the Qt GUI will pop up. Notice the new command directory on the left. Now we can play with these commands and add them in the `g4run.mac` mac file:
+
+.. code-block:: diff
+
+    # macro file g4run.mac
+
+    /run/initialize
+
+    /tracking/verbose 0
+    /event/verbose 0
+
+    /gun/energy 100 MeV
+    /gun/particle e-
+
+    /run/setCut 1.0 nm
+
+    +/det/setTargetThickness 10 um
+
+    /run/beamOn 100000
+
+If we rerun the simulation like this::
+
+    ./build/yourMainApplication g4run.mac
+
+And we plot again::
+
+    gnuplot
+    gnuplot> plot 'Hist_Edep.dat' u 2:3 w l, "exp_Meroli_100MeV_electron_5p6um_Si.dat" u 1:($2/6300) pt 6
+
+Note how the simulated distribution moved to higher energies.
+
+
+.. _ApplicationMagneticField:
+
+Implementation of magnetic field
+--------------------------------
+
+We can add these methods to `YourDetectorConstruction`::
+
+    void YourDetectorConstruction::ConstructSDandField()
+    {
+        // Create detector field
+        SetFieldValue({100.*CLHEP::T,0.,0.});
+
+        // Construct all Geant4 field objects
+        auto fieldBuilder = G4FieldBuilder::Instance();
+        fieldBuilder->ConstructFieldSetup();
+    }
+
+    void YourDetectorConstruction::SetFieldValue(G4ThreeVector value)
+    {
+        fFieldVector = value;
+
+        G4UniformMagField* magField = nullptr;
+        if (fFieldVector != G4ThreeVector(0.,0.,0.)) {
+            magField = new G4UniformMagField(fFieldVector);
+        }
+
+        // Set field to the field builder
+        auto fieldBuilder = G4FieldBuilder::Instance();
+        fieldBuilder->SetGlobalField(magField);
+    }
+
+We can write a macro file to visualize the geometry and the field::
+
+    # File: vis.mac
+
+    /run/initialize
+
+    /vis/open OGL
+    /vis/drawVolume
+
+    /vis/scene/add/magneticField 2
+
+    /vis/scene/endOfEventAction accumulate 100
+    /vis/scene/add/trajectories 100
