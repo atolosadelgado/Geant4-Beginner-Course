@@ -354,7 +354,11 @@ And the implementation would change a bit too; in addition, we have added a prin
         {
             fTargetMaterial = mat;
 
-        if(G4RunManager::GetRunManager()) G4RunManager::GetRunManager()->PhysicsHasBeenModified();
+        if(fTargetMaterial && fTargetPhysicalVolume)
+        {
+            fTargetPhysicalVolume->GetLogicalVolume()->SetMaterial(fTargetMaterial);
+        }
+        G4RunManager::GetRunManager()->PhysicsHasBeenModified();
 
         }
         return;
@@ -363,9 +367,15 @@ And the implementation would change a bit too; in addition, we have added a prin
     void YourDetectorConstruction::SetTargetThickness(G4double thickness){
         fTargetThickness = thickness;
 
-        if(G4RunManager::GetRunManager()) G4RunManager::GetRunManager()->ReinitializeGeometry();
+        G4RunManager::GetRunManager()->ReinitializeGeometry();
     }
+.. note::
 
+    If the method `YourDetectorConstruction::Construct()` has been called, `fTargetPhysicalVolume` will point to the target placed volume and we can directly change its material with this line::
+        fTargetPhysicalVolume->GetLogicalVolume()->SetMaterial(fTargetMaterial);
+
+
+Finally, the most important method of the class::
 
     G4VPhysicalVolume* YourDetectorConstruction::Construct(){
 
@@ -422,6 +432,8 @@ And the implementation would change a bit too; in addition, we have added a prin
 
     }
 
+
+
 .. admonition:: **What's next?**
    :class: whatsnext
 
@@ -440,6 +452,11 @@ To retrieve a reference physics list, we will use of a so-called factory. Then w
     G4PhysListFactory plFactory;
     G4VModularPhysicsList *pl = plFactory.GetReferencePhysList( plName );
 
+
+On top of the reference physics list, we can register some other modules. For example to add optical physics module or radioactive decay module, we can add the following lines (they can be enabled by UI commands that we will see later)::
+
+    pl->RegisterPhysics( new G4OpticalPhysics() );
+    pl->RegisterPhysics( new G4RadioactiveDecayPhysics() );
 
 .. tip::
 
