@@ -7,10 +7,15 @@ Final application starting point
 We will start from the end of the previus section :ref:`ref-Intermediate-Application`, where we had a Geant4 simulation running without any user code to extract any information. In this section we will introduce optional user actions that we will use to extract information during the simulation steps with the final goal of calculating the average and RMS energy deposited in the target per event.
 
 
+.. admonition:: **What's next?**
+   :class: whatsnext
+
+    Please, check the notes about User Actions in the previous chapter :ref:`OptionalUserAction` before continuing.
+
 .. _ApplicationOptUseractions:
 
-Optional User Actions
----------------------
+Implementation of optional User Actions
+---------------------------------------
 
 There are plenty of ways to collect information during the simulation (Sensitive Detectors, Primitive scorers, G4Analysis). We will use a simpler approach, define some optional user actions that will allow to access the simulation information at each step, and then accumulate it during the event, and last to calculate some quantities. For this we will implement G4UserSteppingAction, G4UserEventAction and G4UserRunAction respectively.
 
@@ -669,6 +674,11 @@ We can pass `YourPrimaryGenerator` to `YourRunAction`, so it setups the gun posi
                 SetUserAction(stepAction);
 
             }
+
+.. admonition:: **What's next?**
+   :class: whatsnext
+
+    Please, check the notes about Multithreading in the previous chapter :ref:`MT` before continuing.
 
 .. _ApplicationMultithreading:
 

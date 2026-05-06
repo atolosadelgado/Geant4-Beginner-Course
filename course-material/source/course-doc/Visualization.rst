@@ -109,4 +109,9 @@ If the Run Manager state is not idle, that is, the initalize step is not done ye
     -------- WWWW -------- G4Exception-END --------- WWWW -------
 
 
-Most of the Geant4 examples comes with a visualization macro (`vis.mac`), and we will learn how to write it in :ref:`IntermediateApplicationVisualization`.
+Please check some Geant4 examples and their visualization macro file (usually named `vis.mac`)
+
+.. admonition:: **What's next?**
+   :class: whatsnext
+
+   In the next chapter, :ref:`IntermediateApplicationVisualization`, we will show how to visualize the detector and a simulated event.

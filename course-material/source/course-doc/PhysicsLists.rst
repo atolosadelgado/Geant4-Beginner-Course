@@ -34,17 +34,13 @@ Our physics list must derive from ``G4VUserPhysicsList``, and we should implemen
 - ConstructParticle: defines the particles used in the simulation, by either individual construction or by using helper classes. Particle definition is global and static, that means it does not change during the simulation (the name, charge, mass, etc, does not change during the simulation).
 
 
-.. tip::
+   .. note::
 
-   Try to create an electron `G4ParticleDefinition` (retrieved via `G4ParticleTable->FindParticle("e-");` or `G4Electron::Definition();`) and printout its mass.
+      Try to create an electron `G4ParticleDefinition` (retrieved via `G4ParticleTable->FindParticle("e-");` or `G4Electron::Definition();`) and printout its mass.
 
 - ConstructProcess: defines the physics processes and attach them to each particle. A process describes how a particle interacts with matter through a given interaction, e.g. an electron ionization process. Transportation is a special process that determine how the particle interact with the geometry (no physics, just navigation).
 
-Geant4 includes the definition of tens of particles, but it is possible to introduce new particles (and their corresponding processes).
-
-.. note::
-
-   This part of the implementation can become complex for beginners.
+Geant4 includes the definition of tens of particles, but it is possible to introduce new particles (and their corresponding processes). However, this part of the implementation can become complex for beginners.
 
 
 Modular and Reference Physics Lists
@@ -60,10 +56,14 @@ Characteristics:
 - Delivered "as-is" (but it might need some custom configuration)
 - The user is responsible for validation
 
-.. seealso::
+.. .. seealso::
 
-   Please see the Guide for Physics List:
-   http://geant4-userdoc.web.cern.ch/geant4-userdoc/UsersGuides/PhysicsListGuide/html/index.html
+Please see the `Guide for Physics List <http://geant4-userdoc.web.cern.ch/geant4-userdoc/UsersGuides/PhysicsListGuide/html/index.html>`__ for further details.
 
 
-How to retrieve and implement a reference physics list is detailed in a later section :ref:`how-to-reference-physics-list`.
+.. admonition:: **What's next?**
+   :class: whatsnext
+
+   How to retrieve and implement a reference physics list is detailed in the next chaper, :ref:`how-to-reference-physics-list`.
+   Then, please continue with the following sections on hands-on, that show how to create a Geant4 run manager and register in it a detector constructor, a physics list, and a primary generator. This will allow you to run your first simulation.
+

@@ -46,6 +46,9 @@ Notes
 - We can use `G4UserRunAction::IsMaster()` to identify in which thread we are
 - Each thread has its own instances
 
-TODO: in MT mode, we need to setup different seeds per thread?
+.. TODO: in MT mode, we need to setup different seeds per thread? No
 
-The implementations details are detailed in :ref:`ApplicationMultithreading`
+.. admonition:: **What's next?**
+   :class: whatsnext
+
+   At this point, we can jump to the application :ref:`ApplicationMultithreading`, and implement the necesary components for MT

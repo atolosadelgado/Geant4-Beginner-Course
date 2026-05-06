@@ -85,12 +85,12 @@ Geant4 provides many different types of interfaces, either graphical (Qt-GUI, ja
 
     ui = new G4UIExecutive(argc, argv, "tcsh");
 
-Further details can be found in the developers guide, http://geant4-userdoc.web.cern.ch/geant4-userdoc/UsersGuides/ForApplicationDeveloper/html/Control/control.html
+.. note::
 
-In particular, a list of built-in UI commands can be found here: http://geant4-userdoc.web.cern.ch/geant4-userdoc/UsersGuides/ForApplicationDeveloper/html/Control/commands.html
+    Further details can be found in the `developers guide <http://geant4-userdoc.web.cern.ch/geant4-userdoc/UsersGuides/ForApplicationDeveloper/html/Control/control.html>`__.  In particular, a list of built-in UI commands can be found `here <http://geant4-userdoc.web.cern.ch/geant4-userdoc/UsersGuides/ForApplicationDeveloper/html/Control/commands.html>`__.
 
-New UI commands can be defined by the application developer as indicated here:
-http://geant4-userdoc.web.cern.ch/geant4-userdoc/UsersGuides/ForApplicationDeveloper/html/Control/userInterfaceCommand.html
+    New UI commands can be defined by the application developer as described `here <http://geant4-userdoc.web.cern.ch/geant4-userdoc/UsersGuides/ForApplicationDeveloper/html/Control/userInterfaceCommand.html>`__.
+    In the last stage of the application implementation, we will use this feature, see :ref:`ApplicationCustomUIcommands`.
 
 One can use the application to get a list of available commands including the custom ones by:
 
@@ -126,3 +126,8 @@ Interactive terminal can interpret some commands that have no effect on the Gean
 - ?UIcommand : show current parameter values of the command
 - help [UIcommand] : help
 - exit : job termination
+
+.. admonition:: **What's next?**
+   :class: whatsnext
+
+   In the next chapter, :ref:`IntermediateApplicationUI`, we will show how to add a user interface and use it to configure the simulation.

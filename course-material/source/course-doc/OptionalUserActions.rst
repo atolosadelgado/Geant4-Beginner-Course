@@ -1,8 +1,8 @@
 
 .. _OptionalUserAction:
 
-Optional User Actions
----------------------
+User Actions
+------------
 
 The only mandatory user action is the primary generator, because without primaries there is no simulation. We could see the steps during the simulation and visualize some events without these optional user actions. However, we will use these optional user actions as conecting point between our application and Geant4 simulation.
 
@@ -180,4 +180,9 @@ G4UserRunAction
   * Create custom ``G4Run`` subclass
   * The method ``GenerateRun()`` will be automatically invoked by G4RunManager at initialization to generate the derived G4Run class object
 
-At this point, we can jump to the application and implement custom optional user actions
+
+
+.. admonition:: **What's next?**
+   :class: whatsnext
+
+   At this point, we can jump to the application and implement custom optional user actions in :ref:`ApplicationOptUseractions`.

@@ -57,6 +57,12 @@ and inside this working directory we need to create the source and include direc
 
 Now we are ready to start populating the project with source code of the 4 mandatory components to run a Geant4 simulation.
 
+.. admonition:: **What's next?**
+   :class: whatsnext
+
+    Please, check the notes about Detector description in the previous chapter :ref:`ref-DetectorDescription` before continuing.
+
+
 .. _YourDetectorConstruction-class:
 
 YourDetectorConstruction class
@@ -308,6 +314,10 @@ As an improvement, we can move the calculation of the world and target sizes to 
 
     #endif // YourDetectorConstruction_hh
 
+.. tip::
+
+    Avoid hardcoding literal numbers in the code, they are not self-explanatory. Instead, use objects with meaningful names to store the values. Add comments adding context of what/why/how/when. Think about the scope of the data (used within a function or several, within a class? should it be exposed or keep it private? will this value change or it will remain constant?).
+
 And the implementation would change a bit too; in addition, we have added a printout to know when the `Construct` Method is being called::
 
     #include "YourDetectorConstruction.hh"
@@ -412,7 +422,10 @@ And the implementation would change a bit too; in addition, we have added a prin
 
     }
 
+.. admonition:: **What's next?**
+   :class: whatsnext
 
+    Please, check the notes about Physics in the previous chapter :ref:`PhysicsLists` before continuing.
 
 .. _how-to-reference-physics-list:
 
@@ -423,9 +436,14 @@ To retrieve a reference physics list, we will use of a so-called factory. Then w
 
 .. code-block:: cpp
 
-    const G4String plName = "FTFP_BERT_EMZ";
+    const G4String plName = "FTFP_BERT";
     G4PhysListFactory plFactory;
     G4VModularPhysicsList *pl = plFactory.GetReferencePhysList( plName );
+
+
+.. tip::
+
+    Take a look to the file `FTFP_BERT.cc` and the the physics registered therein. You can do the same with the physics modules, for example the EM extra physics `G4EmExtraPhysics.cc`
 
 Creating a Geant4 Run Manager
 -----------------------------
@@ -468,6 +486,8 @@ We can compile and run, we will see few printout messages::
     <<< Geant4 Physics List simulation engine: FTFP_BERT
 
 To be able to initialize the run manager and run a simulation, we are still missing the primary generator, the last mandatory component. We will see how to implement it in the next section.
+
+.. _ref-Application-Primary-generator:
 
 Primary generator
 -----------------
@@ -556,7 +576,15 @@ And its implementation in `./src/YourPrimaryGeneratorAction.cc` will look like t
         fGun->GeneratePrimaryVertex(evt);
     }
 
-Notice that we have to allocate and de-allocate memory for the particle gun (with new/delete in the constructor/destructor). Check the header of `G4ParticleGun` for the list of methods. If we try to compile, we will have an error message like `error: class YourDetectorConstruction has no member named GetGunPositionX`. So we have to go back to the `YourDetectorConstruction.hh`, add a private member called `G4double fGunPositionX{0.0};`, and a getter like, `G4double GetGunPositionX(){return fGunPositionX;}`; and in ``YourDetectorConstruction.cc` contructor method, we have to calculate its value as `fGunPositionX = -0.25*( worldXSize + targetXSize );`. After these 3 additions, the code should compile successfully.
+Notice that we have to allocate and de-allocate memory for the particle gun (with new/delete in the constructor/destructor). Check the header of `G4ParticleGun` for the list of methods.
+
+If we try to compile, we will have an error message like `error: class YourDetectorConstruction has no member named GetGunPositionX`. So we have to go back to
+
+- the `YourDetectorConstruction.hh` file, add a private member called `G4double fGunPositionX{0.0};`, and a getter like, `G4double GetGunPositionX(){return fGunPositionX;}`;
+
+- the `YourDetectorConstruction.cc` file, and in the contructor method, we have to calculate its value as `fGunPositionX = -0.25*( worldXSize + targetXSize );`.
+
+After these 3 additions, the code should compile successfully.
 
 YourActionInitialization
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -821,7 +849,6 @@ If we inspect the printout, we will notice that the second run shows that the ge
 
 If we recompile and run, we will see that the position of the primary electron is now correct.
 
-
 Importance of notifying of geometry changes to the run manager
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -833,6 +860,14 @@ When we set a new target thickness, we added a line to notify the run manager th
     }
 
 We can play to remove that line, recompile and run again to see what happens. Now the call to `YourDetectorConstruction::Construct` is not done, the printout does not appear.
+
+
+.. admonition:: **What's next?**
+   :class: whatsnext
+
+    Please, check the notes about User Interfaces (UI) in the previous chapter :ref:`UserInterface` before continuing.
+
+.. _IntermediateApplicationUI:
 
 UI session
 ----------
@@ -975,6 +1010,12 @@ We can select an energy of 500 keV::
         /gun/energy 500 keV
 
 We can take a look to the `G4ParticleGunMessenger.hh` to see the implementation of these commands.
+
+.. admonition:: **What's next?**
+   :class: whatsnext
+
+   Please, check the notes about visualization in the previous chapter :ref:`Visualization` before continuing.
+
 
 .. _IntermediateApplicationVisualization:
 
