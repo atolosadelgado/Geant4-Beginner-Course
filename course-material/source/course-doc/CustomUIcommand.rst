@@ -12,5 +12,7 @@ The object on which the messenger has to act upon must be known to the object, a
 
 Also, you can take a look how the `G4ParticleGunMessenger` looks like.
 
+.. note::
 
+    How many types of `G4UIcmd*` classes that are used in `G4ParticleGunMessenger.cc`?
 
