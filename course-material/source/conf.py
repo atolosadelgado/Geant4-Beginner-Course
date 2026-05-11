@@ -157,7 +157,7 @@ latex_elements = {
 \pagenumbering{Roman}
 \begin{titlepage}
 \vspace*{30mm}
-\textbf{\Huge {\texttt{Geant4} Beginner Course Material}}
+\textbf{\Huge {\texttt{Geant4} Beginner Course (preliminary)}}
 \rule{1.0\linewidth}{2.4pt}\\[-3.7ex] \rule{1.0\linewidth}{0.6pt}
 
 \vspace*{20mm}

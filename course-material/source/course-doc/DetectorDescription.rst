@@ -4,12 +4,19 @@
 Detector Description
 --------------------
 
-In Geant4, We call "detector description" to the description of the materials and geometry of our case of study. The geometry can be instrumented to include fields (e.g., EM) or other features that will be mentioned in the dedicated section.
+In Geant4, the term `detector description` refers to the description of the materials and geometry of the system under study. The geometry can be instrumented to include fields (e.g., EM) or other features that will be mentioned in the dedicated section.
 
 Unit system
 ...........
 
-Geant4 uses the unit system defined in CLHEP (Class Library for High Energy Physics). This system is consistent within the toolkit, but it does not match with other frameworks such as ROOT, so special attention must be given if a combination of both happens.
+Geant4 uses the unit system defined in CLHEP (Class Library for High Energy Physics). This system is consistent within the toolkit, but it does not match with other frameworks such as ROOT, so special attention is required when combining both frameworks.
+
+.. tip::
+
+    The file that contains the units is named `SystemOfUnits.h`, depending on the CLHEP installation, it will found in:
+
+        - :file:`$G4INSTALL/include/Geant4/CLHEP/Units/SystemOfUnits.h` if CLHEP is built-in by Geant4,
+        - :file:`$CLHEP_DIR/include/CLHEP/Units/SystemOfUnits.h` if CLHEP was installed manually.
 
 To use the system of units we have to load this header::
 
@@ -22,7 +29,7 @@ There are some natural units of Geant4 (ns, mm, eplus, MeV, radian, kelvin, cand
 
 .. warning::
 
-    Please avoid loading a full namespace into our program (`using CLHEP;`), as it can lead to bugs very difficult to solve.
+    Please avoid importing an entire namespace into the program (`using CLHEP;`), as it can lead to bugs very difficult to solve.
 
     It is possible to use `using CLHEP::g;` after the include, to avoid repeating the CLHEP namespace each time we use the unit. However, it can lead to problems difficult to debug (if for example there is another variable called `g`).
 
@@ -31,21 +38,22 @@ There are some natural units of Geant4 (ns, mm, eplus, MeV, radian, kelvin, cand
 Geant4 Material model
 .....................
 
-The material model of Geant4 resembles the natural definition: a material is made of elements, and an element is made of isotopes. The 3 main classes to describe these objects are
+The material model of Geant4 follows the natural definition: a material is made of elements, and an element is made of isotopes. The 3 main classes to describe these objects are
 
 - G4Isotope: describes the properties of isotopes (Z - atomic number, N - number of nucleons and A - molar mass) with unique name and index
 - G4Element: describes the properties of atoms (Z - effective atomic number, N - effective number of nucleons and A - effective molar mass, number of isotopes, etc.) with unique name, symbol and index
 - G4Material: describes the macroscopic properties of matter (density, state, temperature, pressure, etc.) with unique name and index
 
-Each time an object of these kind is created, a pointer is stored in the corresponding table.
+Each time an object of this kind is created, a pointer is stored in the corresponding table.
 
-However, as in many other parts of Geant4, we can build what we need (e.g., materials) from their minimal components (e.g., isotopes for materials), or we can use Geant4 builtin components to get what we want (builders, factories, etc). The last is the preferred way to ensure consistency across the toolkit. In particular, for materials Geant4 provides a set of predefined materials whose composition and properties are taken from NIST database. See documentation for further details
+However, as in many other parts of Geant4, we can build what we need (e.g., materials) from their minimal components (e.g., isotopes for materials), or we can use Geant4 builtin components to get what we want (builders, factories, etc). The latter is the preferred option to ensure consistency across the toolkit. In particular, for materials Geant4 provides a set of predefined materials whose composition and properties are taken from NIST database. See documentation for further details
 
-There are some requisites for materials:
+There are several requirements for materials:
+
 - if building density from scratch, we have to specify density larger than zero (if we get the material from Geant4 NIST database, we do not need to)
-- temperatura and pressure can be optionally setup, default are normal conditions
+- temperature and pressure can be optionally setup, default are normal conditions
 - state of matter can be solid or gas; if not specified, assumed gas if density lower than kGasThreshold = 10 mg/cm3)
-- solids are consider amorphous (isotropic properties) by default, and in general is a good approximation. However, there is a special extension to include some information about the crystaline structure
+- solids are consider amorphous (isotropic properties) by default, and in general is a good approximation. However, there is a special extension to include some information about the crystalline structure
 
 Isotopes
 ^^^^^^^^
@@ -73,7 +81,7 @@ Inspect header file G4Isotope.hh and learn what are the arguments for the constr
 
     }
 
-G4Isotope has defined the operator "<<", which prints the information stored in the object. The definition is here: https://github.com/Geant4/geant4/blob/41f2dd79968018de4efb966f2546970b30c4af78/source/materials/src/G4Isotope.cc#L84
+`G4Isotope` has defined the operator `<<`, which prints the information stored in the object. The definition of this operator is found in `the implementation file <https://github.com/Geant4/geant4/blob/41f2dd79968018de4efb966f2546970b30c4af78/source/materials/src/G4Isotope.cc#L84>`_
 
 We can keep using the following cmake configuration `CMakeLists.txt`::
 
@@ -91,7 +99,7 @@ To configure and build our project, we write the following commands in a termina
 Elements
 ^^^^^^^^
 
-Inspect header file G4Element.hh and learn what are the arguments for the constructor. We can start by building an element by ourselves, providing element name, symbol, atomic number (z) and atomic mass (a). Geant4 will make this element with the natural isotopic composition (the isotopes are deduced by the symbol). The atomic mass is not updated after assigning the isotopes. A minimal code to code this looks like this::
+Inspect header file G4Element.hh and learn what are the arguments for the constructor. We can start by building an element by ourselves, providing element name, symbol, atomic number (z) and atomic mass (a). Geant4 will make this element with the natural isotopic composition (the isotopes are deduced by the symbol). The atomic mass is not updated after assigning the isotopes. A minimal example looks like this::
 
     #include "globals.hh" // G4cout, G4endl
 
@@ -286,7 +294,7 @@ And the corresponding output will be::
 NIST material database
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Geant4 has a set of predefined elements materials whose properties come from NIST database (density, mean ionization energy, etc). We can retrieve elements by symbol or atomic number, and materials by name (starting by `G4_`). List of NIST elements and materials is found in the documentation: https://geant4-userdoc.web.cern.ch/UsersGuides/ForApplicationDeveloper/html/Appendix/materialNames.html or the code https://github.com/Geant4/geant4/blob/41f2dd79968018de4efb966f2546970b30c4af78/source/materials/src/G4NistMaterialBuilder.cc#L708
+Geant4 has a set of predefined elements materials whose properties come from NIST database (density, mean ionization energy, etc). We can retrieve elements by symbol or atomic number, and materials by name (starting by `G4_`). List of NIST elements and materials is found in the user guide for `Application Developper <https://geant4-userdoc.web.cern.ch/UsersGuides/ForApplicationDeveloper/html/Appendix/materialNames.html>`_ or the `code implementation of G4NistMaterialBuilder <https://github.com/Geant4/geant4/blob/41f2dd79968018de4efb966f2546970b30c4af78/source/materials/src/G4NistMaterialBuilder.cc#L708>`_.
 
 The following main program show some functionality of the Geant4 NIST material manager::
 
@@ -345,8 +353,8 @@ The following main program show some functionality of the Geant4 NIST material m
 
 .. tip::
 
-    Geant4 distributes examples that may show the functionality that we need for our application. In our case, this example reviews what we have seen in this section
-    https://github.com/Geant4/geant4/blob/41f2dd79968018de4efb966f2546970b30c4af78/examples/extended/electromagnetic/TestEm3/src/DetectorConstruction.cc#L89
+    Geant4 distributes examples that may show the functionality that we need for our application. In our case, `this example <https://github.com/Geant4/geant4/blob/41f2dd79968018de4efb966f2546970b30c4af78/examples/extended/electromagnetic/TestEm3/src/DetectorConstruction.cc#L89>`_ reviews what we have seen in this section
+
 
 
 And the corresponding output looks like::

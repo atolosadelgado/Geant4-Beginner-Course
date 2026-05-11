@@ -1,4 +1,13 @@
 
+
+In this chaper, we will implement the minimal components to run a Geant4 simulation. These components are:
+
+    - geometry
+    - physics
+    - primary particle source (the only mandatory user action)
+
+In addition, we will review some of the Geant4 user interfaces that will allow us to visualize a simulated event.
+
 .. _ref-Intermediate-Application:
 
 Intermediate application starting point
@@ -71,7 +80,7 @@ YourDetectorConstruction class
 
 .. tip::
 
-    Before coding the detector description, it is usually a good practice to draw a sketch first
+    **Before coding the detector description, it is usually a good practice to draw a sketch first**
 
 We will start by creating the file `YourDetectorConstruction.hh` in the directory include. Inside this header file we are going to declare our class `YourDetectorConstruction`. Every header should include a *guard define* by creating a preprocessor macro like this::
 
@@ -90,9 +99,13 @@ The preprocessor guard define prevents the class declaration from being included
 
     Use consistent naming of the header file name and the class declared inside, and the preprocessor guard define.
 
-Now we can declare our class `YourDetectorConstruction` derived from the Geant4 interface `G4VUserDetectorConstruction`. In addition, we need to include the corresponding Geant4 header file `G4VUserDetectorConstruction.hh`. Then we can start declaring public methods such as the constructor, destructor and the method `Construct`. The latter method and the destructor are virtual, so we mark them with `override`. This keyword tells the compiler to use our implementation for these methods instead of the baseclass. It is a good practice because it helps to spot simple errors at compile time.
+Now we can declare our class `YourDetectorConstruction` derived from the Geant4 interface `G4VUserDetectorConstruction`. In addition, we need to include the corresponding Geant4 header file `G4VUserDetectorConstruction.hh`. Then we can start declaring public methods such as the constructor, destructor, and the method `Construct`. The `Construct` method and destructor in the base class are virtual methods. We can use the keyword `override` in the derived class methods. This keyword does not change the execution logic; it is simply a flag that tells the compiler that we intend to override a virtual method, so errors can be detected at compile time.
 
-In addition, we are going to add two private class members, the target material and the target thickness. This is done to keep the information inside the object `YourDetectorConstruction`. The class members are visible to all methods of the class. Note that we need a forward declaration for the G4Material class, but not for G4VPhysicalVolume. This is because the base class G4VUserDetectorConstruction already has a forward declaration of G4VPhysicalVolume. If we need to use some methods of that class, we need to include it. If we want to just declare or pass a pointer as argument/return of a function, a forward declaration is enough. Forward declarations allow to break circular dependencies between classes. Member class initialization can be done in 3 places: at declaration (in the header), in the constructor intialization list, or in the constructor body function. The first is always recommended to avoid subtle bugs and keep clarity. The file now looks like this::
+.. tip::
+
+    Use `override` keyword when implementing a method in the derived class that comes from a virtual method in the base class. This helps to spot errors at compile time.
+
+In addition, we are going to add two private class members, the target material and the target thickness. This is done to keep the information inside the object `YourDetectorConstruction`. The class members are visible to all methods of the class. Note that we need a forward declaration for the G4Material class, but not for `G4VPhysicalVolume`. This is because the base class `G4VUserDetectorConstruction` already has a forward declaration of `G4VPhysicalVolume`. If we need to use some methods of that class, we need to include it. If we want to just declare or pass a pointer as argument/return of a function, a forward declaration is enough. Forward declarations allow to break circular dependencies between classes. Member class initialization can be done in 3 places: at declaration (in the header), in the constructor intialization list, or in the constructor body function. The first is always recommended to avoid subtle bugs and keep clarity. The file now looks like this::
 
     // File: YourDetectorConstruction.hh
 
@@ -152,7 +165,7 @@ Now we create the main function in the file `yourMainApplication.cc` like this::
 
 To configure, compile and run the final executable, from the main directory, as follows::
 
-    cmake -S . -B build -D Geant4_DIR=$G4INSTALL/lib64/cmake
+    cmake -S . -B build
     cmake --build build -- -j8
     ./build/yourMainApplication
 
@@ -183,6 +196,10 @@ Once we check that it compiles and run without errors, we can start implementing
 
     YourDetectorConstruction::~YourDetectorConstruction() {}
 
+Now we can implement the material and thickness setters. For the first, we will retrieve the material from Geant4 NIST database, and before using the returned value we have to check if it is null. If we change the material, we have to notify the run manager to rebuild the physics tables.
+
+.. code-block:: cpp
+
     void YourDetectorConstruction::SetTargetMaterial(const G4String& matName){
         G4Material* mat = G4NistManager::Instance()->FindOrBuildMaterial(matName);
         if(nullptr == mat){
@@ -207,6 +224,17 @@ Once we check that it compiles and run without errors, we can start implementing
         }
     }
 
+
+.. note::
+
+    The method `SetTargetMaterial` as it is now, it is configuring the internal variable `fTargetMaterial`.
+    This variable will be checked later by `Construct`.
+
+    Question: will this method be able to change the detector material if `Construct` is not called?
+
+And finally, the `Construct` method that will put together the materials and geometry of our setup.
+
+.. code-block:: cpp
 
     G4VPhysicalVolume* YourDetectorConstruction::Construct(){
         // I. CREATE/SET MATERIALS:
@@ -262,6 +290,14 @@ Once we check that it compiles and run without errors, we can start implementing
 
         return nullptr;
     }
+
+
+.. tip::
+
+    Show explicit intention by using these whenever it is possible:
+
+        - `const` for values that should not be modified
+        - `constexpr` for values that are true compile-time constants
 
 
 This code will compile, but it will give a segmentation fault, because nobody created a RunManager, and therefore the instance is null but we are using that pointer (without checking). We will have to create a run manager in the next section.
@@ -369,6 +405,7 @@ And the implementation would change a bit too; in addition, we have added a prin
 
         G4RunManager::GetRunManager()->ReinitializeGeometry();
     }
+
 .. note::
 
     If the method `YourDetectorConstruction::Construct()` has been called, `fTargetPhysicalVolume` will point to the target placed volume and we can directly change its material with this line::
@@ -889,7 +926,7 @@ We can play to remove that line, recompile and run again to see what happens. No
 UI session
 ----------
 
-In a previous section :ref:`UserInterface` we have reviewed the different types of UI sessions. We can implement an optional behaviour: if we provide an argument to the executable, we will assume if the name of a macro file, that we will execute in batch mode and then we will exit the application. If we do not provide any argument, we will start an interactive session with the preferred session, which will be a graphical interface based on Qt. After implementing the `G4UIExecutive` and the control flow to decide what to do, the main function should look like this::
+In a previous section :ref:`UserInterface` we have reviewed the different types of UI sessions. We can implement an optional behavior: if we provide an argument to the executable, we will assume if the name of a macro file, that we will execute in batch mode and then we will exit the application. If we do not provide any argument, we will start an interactive session with the preferred session, which will be a graphical interface based on Qt. After implementing the `G4UIExecutive` and the control flow to decide what to do, the main function should look like this::
 
         #include "YourDetectorConstruction.hh"
         #include "YourActionInitialization.hh"

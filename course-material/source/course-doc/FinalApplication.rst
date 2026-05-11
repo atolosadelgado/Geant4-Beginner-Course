@@ -1158,7 +1158,7 @@ We can plot it for example with `gnuplot` ::
     gnuplot
     gnuplot> plot 'Hist_Edep.dat' u 2:3 w l
 
-The experimental data is provided in the course git repository, https://github.com/mnovak42/Geant4-Beginner-Course/blob/master/applications/final-application/experiment/exp_Meroli_100MeV_electron_5p6um_Si.dat, we can retrieve it locally by doing ::
+The experimental data is provided in the `course git repository <https://github.com/mnovak42/Geant4-Beginner-Course/blob/master/applications/final-application/experiment/exp_Meroli_100MeV_electron_5p6um_Si.dat>`_, we can retrieve it locally by doing ::
 
     wget https://raw.githubusercontent.com/mnovak42/Geant4-Beginner-Course/refs/heads/master/applications/final-application/experiment/exp_Meroli_100MeV_electron_5p6um_Si.dat
 

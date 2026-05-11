@@ -36,7 +36,7 @@ What is G4Step
   * Pre-step point
   * Post-step point
 
-- These store:
+- Each point stores:
 
   * Position
   * Energy
@@ -46,7 +46,7 @@ What is G4Step
 
 - Step evolution: Post-step becomes next pre-step. The post-step is simulated based on the pre-step only (no memory of previous steps).
 
-TODO: check if Geant4 is fully Markovian
+.. TODO: check if Geant4 is fully Markovian
 
 - Boundary condition: If step ends at geometry boundary:
 
@@ -70,21 +70,37 @@ TODO: check if Geant4 is fully Markovian
 G4UserSteppingAction
 """"""""""""""""""""
 
-- This optional user action allow us to access information after each simulation step with the virtual method `UserSteppingAction(const G4Step * step)`
+The stepping action allows the user to execute custom code after every simulation step of every particle track. It provides access to:
 
-    - Notice that its name does not start by `G4V` as other classes we used, but the user class will still derive from this base class, which indicates that it is not pure virtual
+    - The step information (G4Step)
+    - The particle state (G4Track)
+    - Either from the step or the track, we can access all the information about the simulation
 
-    - The base class is virtual but not abstract: it gives a default implementation, see `G4UserSteppingAction.hh`
+        - See `G4Step.hh`, `G4StepPoint.hh` , `G4ParticleDefinition.hh`, `G4DynamicParticle.hh`
 
-- Either from the step or the track, we can access all the information about the simulation
+    - Quantities produced during the step, such as continuously deposited energy or secondary particles
 
-    - See `G4Step.hh`, `G4StepPoint.hh` , `G4ParticleDefinition.hh`, `G4DynamicParticle.hh`
+Typical uses include:
 
-- To implement custom stepping action:
+    - scoring energy deposition
+    - detecting boundary crossings
+    - killing particles under specific conditions
+    - debugging the tracking process
+
+To implement custom stepping action:
 
   * Derive from ``G4UserSteppingAction``
   * Override virtual method ``UserSteppingAction(const G4Step* theStep)``
+
+      - Notice that its name does not start by `G4V` as other classes we used, but the user class will still derive from this base class, which indicates that it is not pure virtual
+      - The base class is virtual but not abstract: it gives a default implementation, see `G4UserSteppingAction.hh`
+
   * Register in an object of the class in ``ActionInitialization::Build()``
+
+
+.. tip::
+
+  See the Geant4 example `$G4Install/share/Geant4/examples/basic/B4/B4a`, particularly the implementation of the custom `G4UserSteppingAction` (`link <https://github.com/Geant4/geant4/blob/master/examples/basic/B4/B4a/src/SteppingAction.cc>`_)
 
 G4Event
 """""""
@@ -104,6 +120,7 @@ Event workflow:
     - Destructive interaction
     - Zero kinetic energy
     - User termination
+
   * When one track object reaches its termination condition, a new G4Track object is taken from the stack and its simulation starts. The tracking of each particle happens independently, the simulation has no memory of other tracked particles
 
 - Event ends when the track-stack is empty
@@ -118,23 +135,21 @@ Event workflow:
 G4UserEventAction
 """""""""""""""""
 
-- Provides control before and after an event.
-
-- Virtual methods:
+The event action allows the user to execute code at the beginning and end of each event, by overriding the following virtual methods:
 
   * ``BeginOfEventAction(const G4Event*)`` , called before a new event processing starts
   * ``EndOfEventAction(const G4Event*)``, called after an event processing is completed
 
-- Typical usage:
-
-  * Begin: clear data structures
-  * End: store or aggregate results
+It is commonly used to initialise, reset, accumulate, and store event-level quantities during the simulation. For instance, event counters, hit collections, accumulating energy deposition during an event, writing event summaries to output files. Event-specific information can be stored either directly in the event action class or attached to the `G4Event` object through custom `G4VUserEventInformation` derived class.
 
 - To implement custom Event Action:
 
   * Derive from ``G4UserEventAction`` and implement the 2 methods listed above
   * Create an object of the derived class and register it in ``ActionInitialization::Build()`` interface method
 
+.. tip::
+
+  See the Geant4 example `$G4Install/share/Geant4/examples/basic/B4/B4a`, particularly the implementation of the custom `G4UserEventAction` (`link <https://github.com/Geant4/geant4/blob/master/examples/basic/B4/B4a/src/EventAction.cc>`_)
 
 G4Run
 """""
@@ -155,9 +170,7 @@ Run lifecycle:
   * Geometry optimized
   * Physics tables built
 
-
-
-- Optional
+- Optional user hook: `G4UserRunAction`
 
 G4UserRunAction
 """""""""""""""
@@ -169,10 +182,12 @@ G4UserRunAction
   * ``BeginOfRunAction(const G4Run*)``
   * ``EndOfRunAction(const G4Run*)``
 
-- Typical usage: storing global simulation data
+Typical uses include:
 
-  * Begin: initialize histograms/data structures
-  * End: output results
+- opening output files at the beginning of a run
+- writing summaries and statistics
+- closing output files at the end of the run
+- initialising run-level analysis objects
 
 - To use a custom run class, derived from G4Run, we have to:
 
@@ -180,6 +195,61 @@ G4UserRunAction
   * Create custom ``G4Run`` subclass
   * The method ``GenerateRun()`` will be automatically invoked by G4RunManager at initialization to generate the derived G4Run class object
 
+
+.. tip::
+
+  See the Geant4 example `$G4Install/share/Geant4/examples/basic/B4/B4a`, particularly the implementation of the custom `G4UserRunAction` (`link <https://github.com/Geant4/geant4/blob/master/examples/basic/B4/B4a/src/RunAction.cc>`_)
+
+
+.. admonition:: **Take-home**
+   :class: takehome
+
+   Geant4 toolkit allows us to interact with the simulation workflow at different levels:
+
+   .. code-block:: text
+
+      Run ............................... RunAction
+       └── Event ........................ EventAction
+            └── Track ................... TrackingAction
+                 └── Step ............... SteppingAction
+
+   - RunAction: called at the beginning and end of a run
+   - EventAction: called at the beginning and end of an event
+   - TrackingAction: called at the beginning and end of a track
+   - SteppingAction: called once per simulation step
+
+..
+..     Run...................................... RunAction: called at begin/end of run
+..      └── Event............................... EventAction: called at begin/end of event
+..           └── Track.......................... TrackingAction: called at begin/end of track
+..                └── Step...................... SteppingAction: called once per step
+..
+..     RunAction
+..          called once per run
+..
+..     EventAction
+..          called once per event
+..
+..     TrackingAction
+..          called once per track
+..
+..     SteppingAction
+..          called once per step
+..
+..
+..
+..
+..     .. mermaid::
+..
+..       graph TD
+..           Run --> Event
+..           Event --> Track
+..           Track --> Step
+..
+..           RunAction -.-> Run
+..           EventAction -.-> Event
+..           TrackingAction -.-> Track
+..           SteppingAction -.-> Step
 
 
 .. admonition:: **What's next?**

@@ -14,7 +14,7 @@ Virtual Machine
 ^^^^^^^^^^^^^^^
 
 During this course, all exercises will be performed inside a pre-configured
-**Virtual Machine (VM)**, provided by the `Laboratoire de Physique des Deux Infinis Bordeaux (LP2i Bordeaux), CNRS/IN2P3/Bordeaux University <https://extra.lp2ib.in2p3.fr/G4/>`_. Please see the corresponding `README <https://heberge.lp2ib.in2p3.fr/G4VM/Vmware/Stable/geant4.11.4.1/readme-g4.11.4.1>`_ for more information.
+**Virtual Machine (VM)**, provided by the `Laboratoire de Physique des Deux Infinis Bordeaux (LP2i Bordeaux), CNRS/IN2P3/Bordeaux University <https://extra.lp2ib.in2p3.fr/G4/>`_. Please refer to the corresponding `README <https://heberge.lp2ib.in2p3.fr/G4VM/Vmware/Stable/geant4.11.4.1/readme-g4.11.4.1>`_ for more information.
 
 Using this VM ensures that all participants work in the same
 environment, avoiding installation and compatibility issues.
@@ -25,12 +25,12 @@ The VM contains:
 - all required dependencies
 - development tools
 
-There is a default :envvar:`local1` user account created on your linux VM with the :envvar:`local1` password (the root password is :envvar:`rocky8.5`). The :envvar:`/home/local1` home directory location is set in the :envvar:`HOME` environmental variable.
+A default user account named :envvar:`local1` is provided, whose password is :envvar:`local1` (the root password is :envvar:`alma9`). The :envvar:`/home/local1` home directory location is set in the :envvar:`HOME` environmental variable.
 
 .. admonition:: **Take-home**
    :class: takehome
 
-   You should consider the VM as your standard working environment for this tutorial.
+   You should consider the VM as the standard working environment for this tutorial. For real production use, Geant4 is typically deployed through a local installation, containers, or distributed software systems such as CVMFS.
 
 There are several :guilabel:`Geant4` specific environmental variables set in the system. You can see them by::
 
@@ -70,7 +70,8 @@ There are several :guilabel:`Geant4` specific environmental variables set in the
   G4PROTONHPDATA=/usr/local/geant4.11.4.1/share/Geant4-11.4.1/data/G4TENDL1.4/Proton
   G4LEDATA=/usr/local/geant4.11.4.1/share/Geant4-11.4.1/data/G4EMLOW8.0
 
-in a terminal window. You can open a :envvar:`Terminal` window in your system by clicking :envvar:`Activities -> Terminal`. Some of these, e.g. the :guilabel:`Geant4` data set location related variables like the :envvar:`G4LEDATA` that points to the low energy EM physics data set location, are **required** to be set for the operation of :guilabel:`Geant4`.
+in a terminal window. You can open a :envvar:`Terminal` window in your system by clicking :envvar:`Activities -> Terminal`. Some of these, e.g. the :guilabel:`Geant4` data set location related variables like the :envvar:`G4LEDATA` that points to the low energy electromagnetic physics dataset location, are **required** to be set for the operation of :guilabel:`Geant4`.
+
 These required environmental variables are usually set in the post-install procedure (see at the end of the :ref:`Configure, build and install, <ref_InstallFromSource>` part above).
 Other :guilabel:`Geant4`, **optional** environmental variables are set in your VM system simply for convenience. These can be grouped to :guilabel:`Geant4` (build) configuration and some location related environmental variables.
 The first set was used during the production of the VM build of the toolkit to turn ``ON/OFF`` some of the :guilabel:`Geant4` optional :ttt:`CMake` configuration option e.g.
@@ -78,7 +79,14 @@ The first set was used during the production of the VM build of the toolkit to t
  - :envvar:`G4VIS_USE_OPENGLX`: that was used to turn ``ON/OFF`` the :envvar:`GEANT4_USE_OPENGL_X11` :guilabel:`Geant4` optional :ttt:`CMake` configuration option for enabling the visualization component with :ttt:`OpenGL-Xlib` driver (i.e. :ttt:`OpenGL` with the :ttt:`X11 X Window System`).
  - :envvar:`G4UI_USE_QT`: that was used to turn ``ON/OFF`` the :envvar:`GEANT4_USE_QT` :guilabel:`Geant4` optional :ttt:`CMake` configuration option for enabling the :ttt:`Qt` based Graphical User Interface (GUI)
 
-The second set contains those variables that makes easy the locate the directories of the :guilabel:`Geant4` source code (:envvar:`G4SRC`), install (:envvar:`G4INSTALL`) or the configuration location (:envvar:`G4COMP`) that needs to be provided in the required ``Geant4_DIR`` :ttt:`CMake` input variable when compiling any :guilabel:`Geant4` applications.
+The second set contains variables that make it easier to locate the Geant4 source, installation, and configuration directories:
+
+  - :guilabel:`Geant4` source code, :envvar:`G4SRC`),
+  - install (:envvar:`G4INSTALL`)
+  - configuration location (:envvar:`G4COMP`)
+
+As we will see later, the install directory has to be pass to cmake as `-DCMAKE_PREFIX_PATH=$G4INSTALL`, so it can configure the project of a Geant4 application. Alternatively, the configuration location can be passed, as `-DGeant4_DIR=$G4COMP`.
+
 You can print any of these variable values just before by::
 
   localhost.localdomain:/local1 < 67 >echo $G4SRC
@@ -93,7 +101,7 @@ of commands is required:
 ==========================   ====================
      Command                    Meaning / effect
 ==========================   ====================
-    ``ls``                        list files in the current directly
+    ``ls``                        list files in the current directory
     ``ls -l``                     same as above in long format (more details)
     ``cp`` `file1` `file2`        copy `file1` to `file2`
     ``mv`` `file1` `file2`        move/rename `file1` to `file2`
@@ -106,7 +114,7 @@ of commands is required:
     ``cat`` `file`                show the content of `file`
     ``more`` `file`               shows the file page by page
     ``ctrl + C``                  interrupts the running process
-    ``echo`` `string`             write out the string (e.g. write out the value of a shell variable like PATH as ``echo $PATH``)
+    ``echo`` `string`             print out the string (e.g. write out the value of a shell variable like PATH as ``echo $PATH``)
     ``$``                         use the ``$`` prefix front of shell variables to get their value (e.g. above)
 ==========================   ====================
 
@@ -125,7 +133,7 @@ A working installation of :guilabel:`Geant4` is already available in the Virtual
 Pre-requisites
 ^^^^^^^^^^^^^^
 
-The minimal requisites are a C++ compiler and cmake. Some features rely on external packages, for instance visualization or `GDML` support. The default installation requires around 3 GB of space, but more space is needed if some features are enabled.
+The minimal requirements are a C++ compiler and cmake. Some features rely on external packages, for instance visualization or `GDML` support. The default installation requires around 3 GB of space, but more space is needed if some features are enabled.
 
 Download the source code
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -174,7 +182,7 @@ To **configure** the build, we use ``cmake`` as follows::
 
   bash-3.2$ cmake -S $G4SRC -B $G4BUILD -D CMAKE_INSTALL_PREFIX=$G4INSTALL
 
-where the ``cmake`` option ``-S`` is used to point to the source code directory, ``-B`` to point to the build directory (used for temporal storage) and we use the variable ``CMAKE_INSTALL_PREFIX`` to point to the install directory (where the useful byproducts of the compilation will be copied).
+where the ``cmake`` option ``-S`` is used to point to the source code directory, ``-B`` to point to the build directory (used for temporary storage) and we use the variable ``CMAKE_INSTALL_PREFIX`` to point to the install directory (where the resulting files will be copied/installed).
 
 .. tip::
 
@@ -191,7 +199,7 @@ To **compile** the source code, we use the following command::
 
   bash-3.2$ cmake --build $G4BUILD -- -j4 install
 
-The option ``-j4`` flags that compilation can be done in parallel using 4 threads, and ``install`` keyword indicates to copy the final files to ``G4INSTALL`` directory. During the compilation,the data libraries needed by :guilabel:`Geant4` are also downloaded (unless the feature is disabled)
+The option ``-j4`` indicates that compilation can be performed in parallel using 4 threads, and ``install`` keyword indicates to copy the final files to ``G4INSTALL`` directory. During the compilation,the data libraries needed by :guilabel:`Geant4` are also downloaded (unless the feature is disabled)
 
 .. _ref_G4-post-installation:
 
@@ -208,7 +216,7 @@ and in the ``bin`` directory in particular,::
     bash-3.2$ ls $G4INSTALL/bin
     geant4-config  geant4.csh  geant4.sh
 
-The bash script ``geant4.sh`` can be used to setup a number of environmental variables that will be useful when building our application later::
+The bash script ``geant4.sh`` can be used to set up a number of environmental variables that will be useful when building our application later::
 
     bash-3.2$ source $G4INSTALL/bin/geant4.sh
 
@@ -270,7 +278,7 @@ We can compile one of them in our working directory, by using the following comm
     bash-3.2$ cmake -S $G4INSTALL/share/Geant4/examples/basic/B1 \
                     -B build_example_basic_B1 \
                     -D CMAKE_INSTALL_PREFIX=install_example_basic_B1 \
-                    -D Geant4_DIR=$G4INSTALL/lib64/
+                    -D CMAKE_PREFIX_PATH=$G4INSTALL
     bash-3.2$ cmake --build build_example_basic_B1 -- -j 8
 
 and we can run it as::
@@ -293,7 +301,7 @@ First C++ application
 
 Before introducing :guilabel:`Geant4`, we start with a minimal C++ program.
 
-Consider the following simple `"Hello World!"` C++ code. In oour VM, we create a directory calle :file:`$HOME/geant4/work/preli_cmake` using ``mkdir`` command, then we move to that directory using ``cd`` command, and then we create a text file :file:`ourmain.cc` with the following content shown by ``cat`` command::
+Consider the following simple `"Hello World!"` C++ code. In our VM, we create a directory called :file:`$HOME/geant4/work/preli_cmake` using ``mkdir`` command, then we move to that directory using ``cd`` command, and then we create a text file :file:`ourmain.cc` with the following content shown by ``cat`` command::
 
   bash-3.2$ mkdir -p $HOME/geant4/work/preli_cmake
   bash-3.2$ cd $HOME/geant4/work/preli_cmake/
@@ -324,7 +332,7 @@ type ``G4double`` from :file:`$G4SRC/source/global/management/include/G4Types.hh
 
   #include <iostream>
 
-  // include the Geant4 header where the G4double variable defined
+  // include the Geant4 header where the G4double variable is defined
   #include "G4Types.hh"
 
   int main() {
@@ -346,7 +354,7 @@ when we try to compile now as before, we get an error::
             ^~~~~~~~~~~~
   compilation terminated.
 
-The error tell us that the compiler cannot find :file:`G4Types.hh` file. The compiler knows where the standard header files are, for instance ``iostream``, but not where custom files. We can tell the compiler to look for header files in extra directories with the option ``-I /path/to/headers``. In case of :guilabel:`Geant4`, inside the installation directory there is a directory called ``include/Geant4`` which contains all the public headers. We can include the path to the headers like this::
+The error tells us that the compiler cannot find :file:`G4Types.hh` file. The compiler knows where the standard header files are, for instance ``iostream``, but not where custom header files are located. We can tell the compiler to look for header files in extra directories with the option ``-I /path/to/headers``. In case of :guilabel:`Geant4`, inside the installation directory there is a directory called ``include/Geant4`` which contains all the public headers. We can include the path to the headers like this::
 
   bash-3.2$ g++ -I $G4INSTALL/include/Geant4 -o ourmain ourmain.cc
   bash-3.2$ ./ourmain
@@ -384,15 +392,15 @@ However, when compiling as before we get an error::
       collect2: error: ld returned 1 exit status
 
 
-The linker `ld` is telling us that it cannot find `G4cout` function. This happens becacuse we did not tell him where the Geant4 libraries are. We need to make sure now that the application is linked with the required libraries, located :envvar:`libG4global` and :envvar:`libG4ptl`
-that are under the :file:`G4INSTALL/lib64` directory. The library location can be specified as ``-L$G4INSTALL/lib64`` then linked as ``-lG4global -lG4ptl``. We also need to specify the C++ standard, since :guilabel:`Geant4` requires now C++ standard 17, that can be done by ``-std=c++17``. We need to set the run-time linker path as well with ``-Wl,-rpath,$G4INSTALL/lib64``, so the path to the shared libraries is stored in the final executable. We can put all together::
+The linker `ld` is telling us that it cannot find `G4cout` function. This happens because we did not tell the linker where the Geant4 libraries are located. We need to make sure now that the application is linked with the required libraries, located :envvar:`libG4global` and :envvar:`libG4ptl`
+that are under the :file:`G4INSTALL/lib64` directory. The library location can be specified as ``-L$G4INSTALL/lib64`` then linked as ``-lG4global``. We also can specify the C++ standard, since :guilabel:`Geant4` is now compliant with C++ standard 17, and that can be done by ``-std=c++17``. We need to set the run-time linker path as well with ``-Wl,-rpath,$G4INSTALL/lib64``, so the path to the shared libraries is stored in the final executable and the linker can find them later. We can put all together::
 
 
   bash-3.2$ g++ -o ourmain ourmain.cc \
                 -std=c++17 \
                 -I $G4INSTALL/include/Geant4 \
                 -L $G4INSTALL/lib64 \
-                -lG4global -lG4ptl \
+                -lG4global  \
                 -Wl,-rpath,$G4INSTALL/lib64
 
   bash-3.2$ ./ourmain
@@ -418,7 +426,7 @@ Using this utility, we could simplify the compilation as::
 
   bash-3.2$ g++ -o ourmain ourmain.cc `geant4-config --cflags --libs`
 
-However, this approach is superseeded by CMake.
+However, this approach is superseded by CMake.
 
 CMake as configuration tool
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -446,7 +454,7 @@ In the same directory as ``ourmain.cc``, we can create that file with the follow
   add_executable(ourmain ourmain.cc)
   target_link_libraries(ourmain ${Geant4_LIBRARIES})
 
-The function ``find_package`` will load all the environmental variables and flags needed to build an application compliant with the  :guilabel:`Geant4` installation. The function ``add_executable`` will build and link our executable against the needed libraries. With the function ``target_link_libraries`` we are configuring the build of the final executable ``ourmain`` to link against :guilabel:`Geant4` libraries.
+The function ``find_package`` loads all variables and configuration flags required to build a Geant4 application. The function ``add_executable`` will build and link our executable against the needed libraries. With the function ``target_link_libraries`` we are configuring the build of the final executable ``ourmain`` to link against :guilabel:`Geant4` libraries.
 
 .. tip::
 
@@ -465,7 +473,7 @@ The function ``find_package`` will load all the environmental variables and flag
 
 First, we need to **configure** the build using ``cmake``. There are two options to let :ttt:`CMake` know where the installation of Geant4 is:
 
-- Before configuring the project, we source a bash script that will setup all needed Geant4 environmental variables (see :ref:`ref_G4-post-installation`), and then we configure the project normally::
+- Before configuring the project, we source a bash script that will set up all needed Geant4 environmental variables (see :ref:`ref_G4-post-installation`), and then we configure the project normally::
 
     bash-3.2$ source $G4INSTALL/bin/geant4.sh
     bash-3.2$ cmake -S . -B build
@@ -485,7 +493,7 @@ To **compile** the source code, we use the following command::
 
   bash-3.2$ cmake --build build
 
-CMake creates many files in the ``build`` directory, including our executable, that we can run as the following::
+CMake creates many files in the ``build`` directory, including our executable, which we can run as follows::
 
   bash-3.2$ ./build/ourmain
    x = 1.23
@@ -495,7 +503,7 @@ We can add a printout in the ``CMakeLists.txt`` ::
 
   message("---> We print out the value of Geant4_LIBRARIES: ${Geant4_LIBRARIES}")
 
-If run again the **configure** step, it will printout the libraries that CMake find and use to link our application::
+If run again the **configure** step, it will printout the libraries that CMake finds and uses to link our application::
 
   ---> We print out the value of Geant4_LIBRARIES: Geant4::G4Tree;Geant4::G4FR;Geant4::G4GMocren;Geant4::G4visHepRep;Geant4::G4RayTracer;Geant4::G4VRML;Geant4::G4ToolsSG;Geant4::G4vis_management;Geant4::G4modeling;Geant4::G4interfaces;Geant4::G4mctruth;Geant4::G4geomtext;Geant4::G4gdml;Geant4::G4analysis;Geant4::G4error_propagation;Geant4::G4readout;Geant4::G4physicslists;Geant4::G4run;Geant4::G4event;Geant4::G4tracking;Geant4::G4parmodels;Geant4::G4processes;Geant4::G4digits_hits;Geant4::G4track;Geant4::G4particles;Geant4::G4geometry;Geant4::G4materials;Geant4::G4graphics_reps;Geant4::G4intercoms;Geant4::G4global;Geant4::G4tools;Geant4::G4clhep;Geant4::G4ptl
 
@@ -509,12 +517,9 @@ If run again the **configure** step, it will printout the libraries that CMake f
 Concept of interface
 ^^^^^^^^^^^^^^^^^^^^
 
-:guilabel:`Geant4` solves particle transport simulation problems by relying on **interfaces**. This allows the toolkit to remain independent of specific implementation details.
+:guilabel:`Geant4` solves particle transport simulations by relying on **interfaces**. This allows the toolkit to remain independent of specific implementation details.
 
-An *interface* defines a set of behaviours without specifying how they are implemented. It describes *what* a class can do, but not *how* it does it.
-
-Different classes can implement the same interface, each providing their own
-specific behaviour, while guaranteeing that a common set of functionalities exists.
+An *interface* defines a set of behaviors without specifying how they are implemented. It describes *what* a class can do, but not *how* it does it. Different classes can implement the same interface, each providing its own specific behavior, while guaranteeing that a common set of functionalities exists. In C++ there are several ways of defining interfaces. Here we review interfaces based on inheritance
 
 In :guilabel:`Geant4`, the simulation problem is defined by implementing a set of
 such interfaces (e.g. detector description, physics configuration, primary generator).
@@ -522,8 +527,7 @@ such interfaces (e.g. detector description, physics configuration, primary gener
 Understanding this concept is essential, as it underlies the structure of any
 :guilabel:`Geant4` application.
 
-The following code shows two ``C++`` classes that represent a Cube and a Sphere
-and have a method to calculate their volume
+The following code defines two ``C++`` classes, Cube and Sphere, each implementing a method to calculate its volume.
 
 .. code-block:: cpp
 
@@ -561,7 +565,7 @@ To do so, we have to implement two different functions, one for each class, with
 
 This duplication becomes problematic as the number of shapes increases. Ideally, we would like to write the function only once, independently of the specific shape.
 
-To avoid this duplication, we can introduce an interface that defines the common behaviour.
+To avoid this duplication, we can introduce an interface that defines the common behavior.
 This interface only declares methods that derived classes must implement.
 
 .. code-block:: cpp
@@ -623,17 +627,6 @@ Introduction to key Geant4 components
 
 Geant4 does not provide a (main) *program*. Geant4 is a toolkit that provides the necessary components to describe and run a simulation. The user has to assemble these components in such a manner that the specific simulation problem is described properly.
 
-To define our simulation problem we need to provide some minimal input:
-
-- detector description: a set of volumes placed in space in a hierarchical manner. Each volume corresponds to a mathematical shape and is made of a single material. Fields may be optionally defined. See :ref:`ref-G4VUserDetectorConstruction` and :ref:`ref-DetectorDescription` for more details.
-- physics list: a set of particles and their corresponding processes, that describe how interact with materials at different energies. See :ref:`ref-G4VUserPhysicsList` and :ref:`PhysicsLists` for more details.
-- primary particles: set of initial particles that will be simulated by Geant4 according to he detector description and the physics list. See :ref:`ref-G4VUserPrimaryGeneratorAction` and :ref:`ref-Application-Primary-generator` for more details.
-
-To extract information out of the simulation we will use some optional components that we will review later in :ref:`OptionalUserAction` and show how to implement them in :ref:`ApplicationOptUseractions`.
-
-Simulation workflow
-^^^^^^^^^^^^^^^^^^^
-
 The general flow of a Geant4 simulation is the following:
 
    - A geometry description and a physics list (set of particles and their interaction models with matter) must be provided before running a simulation
@@ -644,13 +637,13 @@ The general flow of a Geant4 simulation is the following:
 
    - Each particle is tracked separately (they do not know about each other). Each particle can create other particles, called *secondary particles* (e.g. by ionization)
 
-   - When particles are injected into the simulation, they are placed in a *stack* to wait. Then, in a loop, Geant4 simulates the particles one by one, and start simulating its pasage through matter, until either is absorbed, annihilated, decays, thermalizes or reach the end of the world. If new secondary particles are created, they are added to the stack
+   - Particles are scheduled for tracking by the Geant4 tracking system. Then, in a loop, Geant4 simulates the particles one by one, and start simulating its passage through matter, until either it is absorbed, annihilated, decays, thermalizes or reach the end of the world. If new secondary particles are created, they are added to the stack
 
    - In Geant4, a *track* represents a status of a given particle (postion, momentum, polarization, etc). The Geant4 *track* is not related to the HEP concept of *reconstructed track*
 
-   - A particle is pushed to jump a *step* by Geant4 navigator, and each step is limited in length by either geometry boundaries or physical processes
+   - Geant4 propagates particles in discrete *steps*, and each step is limited in length by either geometry boundaries or physical processes
 
-   - The event ends when all primary and the subsequent secondary particles are track to the end (when particle is either absorbed, annihilated, decayed, thermalized or reaches the end of the world)
+   - The event ends when all primary and the subsequent secondary particles are tracked to the end (when particle is either absorbed, annihilated, decayed, thermalized or leaves the world volume)
 
 The mandatory components to run a Geant4 simulation are the geometry description, the physics and the primary particle generation. These components are registered in a central object that we have to create in our own main program, called **G4RunManager**. We will review them in the following sections, and come back to them when we write the corresponding code.
 
@@ -661,15 +654,44 @@ The mandatory components to run a Geant4 simulation are the geometry description
    You build your own simulation by combining its components, just like assembling building blocks.
 
 
+Mapping simulation workflow to Geant4 components
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To define our simulation problem (geometry, physics, scoring, etc) we need to provide some minimal input in form of derived classes from Geant4 interface base classes:
+
+- detector description: describes  a set of volumes placed in space in a hierarchical manner. Each volume corresponds to a mathematical shape and is made of a single material. Fields may be optionally defined. See :ref:`ref-G4VUserDetectorConstruction` and :ref:`ref-DetectorDescription` for more details.
+- physics list: describes a set of particles and their corresponding processes, which describe how they interact with materials. See :ref:`ref-G4VUserPhysicsList` and :ref:`PhysicsLists` for more details.
+- primary particles: set of initial particles that will be simulated by Geant4 according to the detector description and the physics list. See :ref:`ref-G4VUserPrimaryGeneratorAction` and :ref:`ref-Application-Primary-generator` for more details.
+
+To extract information out of the simulation we will use some optional components that we will review later in :ref:`OptionalUserAction` and show how to implement them in :ref:`ApplicationOptUseractions`.
+
+
++----------------------------------+--------------------------------------+----------------------------------------------+
+| Real world                       | Geant4 base class                    | Registered in this Geant4 class              |
++==================================+======================================+==============================================+
+| Detector description             | G4VUserDetectorConstruction          | G4RunManager                                 |
++----------------------------------+--------------------------------------+----------------------------------------------+
+| Set of particles and their       | G4VUserPhysicsList                   | G4RunManager                                 |
+| interaction models with matter   |                                      |                                              |
++----------------------------------+--------------------------------------+----------------------------------------------+
+| Primary particle(s)              | G4VUserPrimaryGeneratorAction        | G4VUserActionInitialization                  |
++----------------------------------+--------------------------------------+----------------------------------------------+
+| Control workflow                 | User action classes                  | G4VUserActionInitialization                  |
+| (run/event/step/tracking         | (Run/Event/Stepping/Tracking)        |                                              |
+| actions)                         |                                      |                                              |
++----------------------------------+--------------------------------------+----------------------------------------------+
+| User action initialization       | G4VUserActionInitialization          | G4RunManager                                 |
++----------------------------------+--------------------------------------+----------------------------------------------+
+
 The G4RunManager
 ^^^^^^^^^^^^^^^^
 
-The G4RunManager is the only mandatory manager object that user the needs to create. It is responsible to control the flow of a run, the top level simulation unit, including initialisation of the run (building, setting up the simulation environment). All problem specific information need to be given to the G4RunManager by the user through the
+The G4RunManager is the only mandatory manager object that user needs to create. It is responsible for controlling the flow of a run, the top level simulation unit, including initialisation of the run (building, setting up the simulation environment). All problem-specific information need to be given to the G4RunManager by the user through the
 interfaces provided by the Geant4 toolkit (the concept of interface is reviewed in the following section):
 
    - G4VUserDetectorConstruction (mandatory): how the geometry should be constructed, built
 
-   - G4VUserPhyscsList (mandatory): all the particles and their physics interactions to be simulated
+   - G4VUserPhysicsList (mandatory): all the particles and their physics interactions to be simulated
 
    - G4VUserActionInitialization (mandatory):
 
@@ -694,17 +716,17 @@ invoked by the G4RunManager at initialisation
 We have to implement our own detector description, e.g. YourDetectorConstruction class, derived from this
 base class and (at minimum) implement the Construct() interface method. This method is expected to perform the following:
 
-- create all materials will need to use in your geometry
+- create all materials will be used in the geometry
 - describe your detector geometry by creating and positioning all volumes
 - return the pointer to the root of your geometry hierarchy i.e. the pointer to your “World”
 G4VPhysicalVolume
 
 Then, we have to create a YourDetectorConstruction object and register it in your G4RunManager object
-by using the G4RunManager:SetUserinitialization method (see this in the source!)
+by using the G4RunManager:SetUserInitialization method (see this in the source!)
 
 MT note: the Construct() interface method is invoked only by the Master Thread in case
 of Geant4 MT (i.e. only one detector object), while the other ConstructSDandField()
-interface method is invoked by each Worker Threads (i.e. thread local objects created)
+interface method is invoked by each worker thread (i.e. thread local objects created)
 
 .. admonition:: **Take-home**
    :class: takehome
@@ -733,7 +755,7 @@ The G4VUserActionInitialization
 
 The G4VUserPrimaryGeneratorAction interface is used to build the so called *user-actions*, contact points between the user and different parts of the simulation flow (primary generation, run, event, stepping, etc).
 
-We have to derive our own action Initialisation, e.g. YourActionInitialization class, from this base class and implement G4VUserActionInitialization::Build() interface method. Inside this method, we have to create an object of each user-action class (derived from the corresponding interface) and register it using G4VUserActionInitialization::SetUserAction() base class method. There is only one mandatory user-action, the primary generation action, that is described in the following section.
+We have to derive our own action Initialisation, e.g. YourActionInitialization class, from this base class and implement G4VUserActionInitialization::Build() interface method. Inside this method, we have to create an object of each user-action class (derived from the corresponding interface) and register it using G4VUserActionInitialization::SetUserAction() base class method. There is only one mandatory user action, the primary generation action, that is described in the following section.
 
 .. _ref-G4VUserPrimaryGeneratorAction:
 
@@ -746,7 +768,7 @@ We have to derive our own primary generator action, e.g. YourPrimaryGeneratorAct
 
 Particularly, we will use a G4ParticleGun object, provided by the Geant4 toolkit, to generate primary particles. We will configure it to generate one particle per event with fixed initial kinematics (position, momentum).
 
-Note that the Detector-Construction and the Physics-List need to be created directly in the main program and registered directly in the G4RunManager object. However, all User-Actions needs to be created and registered in a User-Action-Initialisation class (including the only mandatory Primary-Generator-Action as well as all other, optional
+Note that the Detector-Construction and the Physics-List need to be created directly in the main program and registered directly in the G4RunManager object. However, all User-Actions need to be created and registered in a User-Action-Initialisation class (including the only mandatory Primary-Generator-Action as well as all other, optional
 User-Actions)
 
 
@@ -772,13 +794,13 @@ We will frequently refer to the Geant4 Application Developer Guide and inspect e
 
 In the next few days we will build step by step a simple particle transport application using the :guilabel:Geant4 toolkit.
 
-We will start from very simple C++ programs and progressively during the course we will introduce the Geant4 components needed to reproduce the type of simulation you have just seen in the live demo.
+We will start from very simple C++ programs and progressively during the course we will introduce the Geant4 components needed to reproduce the type of simulation you have just seen in the :ref:`ref-LiveDemo`.
 
-We will first implement an minimal application to run a Geant4 simulation (source code in *intermediate application*). This will run a simulation without recording any data. To do so, we need to implement the mandatory components mentioned before:
+We will first implement a minimal application to run a Geant4 simulation (source code in *intermediate application*). This will run a simulation without recording any data. To do so, we need to implement the mandatory components mentioned before:
 
 - YourDetectorConstruction: a simple box (shape) as the detector/target made of silicon (material), placed in another box (shape) *world* volume filled with low density hydrogen gas (*universe*).
 - YourPhysicsList: we will use one of the pre-defined, ready-to-use physics list provided by the Geant4 toolkit (therefore no need to write any user physics list class)
-- YourPrimaryGeneratorAction: a simple particle gun (G4ParticleGun) that generates a single primary particle per event with pre-defined particle type and kinematics pointing toward to our target.
+- YourPrimaryGeneratorAction: a simple particle gun (G4ParticleGun) that generates a single primary particle per event with pre-defined particle type and kinematics pointing toward our target.
 - YourActionInitialization: implement the construction and registration of our YourPrimaryGeneratorAction object
 - develop the main function (application) and execute the simulation
 - add functionality to the main method of our application to be able to run the application in interactive or batch mode, with or without visualisation, and write the corresponding macro files

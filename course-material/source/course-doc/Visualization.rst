@@ -21,7 +21,7 @@ Different visualization engines (Qt, dawn, VTK, etc) can be linked to Geant4, an
     - markers
     - text (e.g., titles, labels)
 
-Further documentation can be found here: http://geant4-userdoc.web.cern.ch/geant4-userdoc/UsersGuides/ForApplicationDeveloper/html/Visualization/visualization.html
+Further documentation can be found in the `user guide for Application development <http://geant4-userdoc.web.cern.ch/geant4-userdoc/UsersGuides/ForApplicationDeveloper/html/Visualization/visualization.html>`_
 
 The different types of drivers and features were described here: Comput. Phys. Comm. 178 (2008) 331-365
 
@@ -35,6 +35,7 @@ The Geant4 code stays basically the same independently from the choice of the dr
 Availability of drivers:
 
 - six of the visualization drivers are always included by default, because they require no external libraries and they are non-interactive (but they are configurable using UI commands or C++):
+
     - ASCIITree : to printout the geometry tree and associated properties to each solid/logical/physical volume (the output can be redirected to a file using a dedicated UI command)
     - TSG_OFFSCREEN : creates a png in batch mode
     - DAWN : for high fidelity geometry visualization
@@ -85,9 +86,9 @@ For the sake of completeness, this is the error message when trying to use OpenG
 Qt GUI with OpenGL visualization driver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Recent developments focused on this combination. Documentation is available at Qt+OpenGL, http://geant4-userdoc.web.cern.ch/geant4-userdoc/UsersGuides/ForApplicationDeveloper/html/Visualization/visdrivers.html#qt
+Recent developments focused on this combination. Documentation is available in the section `Qt+OpenGL` of the `user guide for Application developpers <http://geant4-userdoc.web.cern.ch/geant4-userdoc/UsersGuides/ForApplicationDeveloper/html/Visualization/visdrivers.html#qt>`_
 
-Geant4 OpenGL tutorial with commands here http://geant4.slac.stanford.edu/Presentations/vis/G4OpenGLTutorial/G4OpenGLTutorial.html
+Geant4 OpenGL tutorial with commands is found in this `tutorial <http://geant4.slac.stanford.edu/Presentations/vis/G4OpenGLTutorial/G4OpenGLTutorial.html>`_
 
 To visualize the geometry, we need a driver, for instance `OGL` and ask to draw the volumes (if no arguments are passed, it will draw all)::
 
